@@ -1,0 +1,19 @@
+function guinier_fit(q,int,err,qmin,qmax)
+    idxmin = find(q>qmin,1,'first');
+    idxmax = find(q <= qmax,1,'last');
+    x = q(idxmin:idxmax).^2;
+    y = log(int(idxmin:idxmax));
+    sigma = err(idxmin:idxmax)./int(idxmin:idxmax);
+    w = 1./(sigma.^2);
+    del = sum(w)*sum(w.*x.^2) - sum(w.*x)^2;
+    b = (sum(w.*x.^2)*sum(w.*y)-sum(w.*x)*sum(w.*x.*y))/del;
+    a = (sum(w)*sum(w.*x.*y) - sum(w.*x)*sum(w.*y))/del;
+    db = sqrt(sum(w.*x.^2)/del);
+    da = sqrt(sum(w)/del);
+    rg = sqrt(-3*a);
+    drg = abs(rg*0.5*da/a);
+    iof0 = exp(b);
+    diof0 = db*iof0;
+    int_fit = iof0*exp(-q(idxmin:idxmax).^2 * rg^2 /3);
+    chisquared = sum(((int_fit - int(idxmin:idxmax))./err(idxmin:idxmax)).^2);
+end
