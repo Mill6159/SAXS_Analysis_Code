@@ -320,7 +320,18 @@ class PlotClass:
         plt.show()
 
 
-
+    def IFT_plot(self,IFT,savelabel1='tkRubisCO_0MPa_GNOM_PDDF',savelabel2='RegularizedFit_GNOM',
+                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',plotlabel3='Expt',plotlabel4='Regularized Fit'):
+        '''
+        Plot the output of DATGNOM calculation
+        '''
+        Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = IFT[0],IFT[1],IFT[2],IFT[3],IFT[4],IFT[5],IFT[6],IFT[7], \
+                                                               IFT[8],IFT[9]
+        self.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=savelabel1,
+                           plotlabel1=plotlabel1,plotlabel2=plotlabel2,
+                           xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+        self.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1=plotlabel3,plotlabel2=plotlabel4,
+                                 savelabel=savelabel2,xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
 
 
 

@@ -12,6 +12,7 @@ import os
 import sys
 import csv
 import subprocess
+import platform
 from PlotClass import *
 from FileParser import *
 
@@ -327,7 +328,141 @@ class BasicSAXS:
 
         print('--------------------------------------------------------------------------')
 
-    
+    def runDatgnom(self,rg, file_path, save_path, outname, first_pt=None, last_pt=None,plot=True):
+        '''
+        Adopted from RAW2.0.2
+        Parameters
+        ----------
+        rg: input hydrodynamic radius calculated from GuinerError() function.
+        file_path
+        save_path
+        outname
+        first_pt
+        last_pt
+
+        Returns
+        -------
+
+        '''
+        # This runs the ATSAS package DATGNOM program, to automatically find the Dmax and P(r) function
+        # of a scattering profile.
+
+        print('--------------------------------------------------------------------------')
+        print('###################################################################')
+        print('DATGNOM P(r) calculations beginning')
+
+        '''
+        Add an AUTORG functionaility
+        '''
+
+        # if rg=='':
+        #     hbI0,Rg,hbRg_Err,hb_qminRg,hb_qmaxRg,model=Guiner_Error(q,I,I_Err,nmin,nmax,file='No File Description Provided')
+
+        '''
+        If no save path is provided, dump the file in the current working directory.
+        '''
+
+        if save_path=='':
+            save_path=os.getcwd()
+
+        '''
+        Building some extra compatibility if running on a windows computer.
+        '''
+
+        opsys = platform.system()
+
+        if opsys == 'Windows':
+            datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom.exe'))
+            shell = False
+        else:
+            datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom'))
+            shell = True
+
+        '''
+        Building the command to pass to DATGNOM
+        '''
+
+        if os.path.exists(datgnomDir):
+            cmd = 'cd; ' + '"{}" -o "{}" -r {} '.format(datgnomDir,save_path+outname,rg)
+
+            if first_pt is not None:
+                cmd = cmd + '--first={} '.format(first_pt + 1)
+
+            if last_pt is not None:
+                cmd = cmd + ' --last={} '.format(last_pt + 1)
+
+            cmd = cmd + '"{}"'.format(file_path)
+
+            print('###################################################################')
+            print('The final DATGNOM command that was passed through your terminal is:')
+            n = int(len(cmd) / 2)
+            print(cmd[:n])
+            print(cmd[n:])
+            print('###################################################################')
+
+            process = subprocess.Popen(cmd,stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,shell=shell,cwd=os.getcwd())
+
+            output,error = process.communicate()
+
+
+            if not isinstance(output,str):
+                output = str(output,encoding='UTF-8')
+
+            if not isinstance(error,str):
+                error = str(error,encoding='UTF-8')
+
+            error = error.strip()
+
+            # print(process.communicate())
+
+            if (error == 'Cannot define Dmax' or error == 'Could not find Rg'
+                    or error == 'No intensity values (positive) found'
+                    or error == 'LOADATF --E- No data lines recognized.'
+                    or error == 'error: rg not specified'
+                    or 'error' in error):
+                datgnom_success = False
+            else:
+                datgnom_success = True
+
+            print('The final output file/filepath is:\n%s'%os.path.join(os.getcwd(),outname))
+            # print(os.path.join(os.getcwd(),outname))
+
+            if datgnom_success:
+                try:
+                    iftm = self.FileParser.loadOutFile(os.path.join(save_path,outname))
+                except Exception:
+                    iftm = None
+            else:
+                iftm = None
+
+            Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = iftm[0],iftm[1],iftm[2],iftm[3],iftm[4],iftm[5],iftm[6],iftm[7],iftm[8],iftm[9]
+
+            print('DATGNOM reports the quality of the regularized fit to be: %s' % results['quality'])
+            print('From DATGNOM calculated P(r) the Rg is reported as: %.2f +/- %.2f' % (results['rg'],results['rger']))
+            print('From DATGNOM calculated P(r) the I0 is reported as: %.2f +/- %.2f' % (results['i0'],results['i0er']))
+            print('From DATGNOM calculated P(r) the Dmax is reported as: %.2f' % results['dmax'])
+
+            if plot == True:
+                self.plots.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=outname,
+                                   plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
+                                   xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+                self.plots.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1='Expt',
+                                         plotlabel2='Regularized Fit',
+                                         savelabel=outname+'RegularizedFit_DATGNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',
+                                         LogLin=True)
+            else:
+                print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runDatgnom() arguments.')
+
+            print('###################################################################')
+            print('Given these results, you should attempt to manually refine the P(r) using the runGNOM() function available in this class.')
+            print('--------------------------------------------------------------------------')
+            return iftm
+
+        else:
+            print('Cannot find ATSAS')
+            raise Exception('Cannot find datgnom.')
+
 
 
     def PDDF(self,shape,Dmax,I,q):
