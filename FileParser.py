@@ -18,6 +18,10 @@ class FileParser():
 
 
 	def loadOutFile(self,filename):
+		''''
+		This function reads the output file from the GNOM P(R) calculations and was adopted from 
+		bioxtsas RAW2.0.2 (!REF)
+		''''
 
 	    five_col_fit = re.compile('\s*-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s*$')
 	    three_col_fit = re.compile('\s*-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s*$')
