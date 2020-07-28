@@ -295,7 +295,7 @@ class BasicSAXS:
         else:
             print('GNOM calculation execution was successful')
         finally:
-            print('Now moving forward!')
+            print('Now moving forward with downstream processing!')
 
 
         '''
@@ -308,16 +308,19 @@ class BasicSAXS:
         '''
         IFT_input=str(os.getcwd()) + '/' + output_name
         IFT=self.FileParser.loadOutFile(str(IFT_input))
-        Pr, R =IFT[0],IFT[1]
-        
+        Pr, R, Pr_err, Jexp, qshort, Jerr, Jreg, results, Ireg, qfull =IFT[0],IFT[1],IFT[2],IFT[3],IFT[4],IFT[5],IFT[6],IFT[7],IFT[8],IFT[9]
 
-        # GNOM_output_Data=np.loadtxt(fname=str(os.getcwd()) + '/' + output_name,
-        #     dtype={'names': ('R', 'P(R)','ERROR'), 'formats': (np.float,np.float,np.float)},skiprows=23)
+        print('GNOM reports the quality of the regularized fit to be: %s'%results['quality'])
+        print('From GNOM calculated P(r) the Rg is reported as: %.2f +/- %.2f'%(results['rg'],results['rger']))
+        print('From GNOM calculated P(r) the I0 is reported as: %.2f +/- %.2f' % (results['i0'],results['i0er']))
+        print('From GNOM calculated P(r) the Dmax is reported as: %.2f'%results['dmax'])
 
         if plot==True:
             self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel='tkRubisCO_0MPa_GNOM_PDDF',
                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
                     xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+            self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
+                               savelabel='RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
         else:
             print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runGNOM() arguments.')
 
@@ -327,12 +330,9 @@ class BasicSAXS:
     
 
 
-
-
     def PDDF(self,shape,Dmax,I,q):
         """plot pair distance distribution
-        It would be better to GNOM here if possible.. Implementing all of the details to
-        carefully calculate the PDDF is likely to time consuming & also likely quite complicated.
+        This function is now essentially useless now that I have GNOM running in runGNOM()..
         """
         # reference:"Svergen&Koch,Rep.Phys.Prog 66(2003) 1735-82
         r_range = np.arange(0,Dmax * 1.4,Dmax / 100)

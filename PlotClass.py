@@ -127,8 +127,8 @@ class PlotClass:
             plt.legend(numpoints=1,fontsize=18,loc='best')
             if set_ylim == True:
                 ax1.set_ylim(ylow,yhigh)
-            else:
-                print('Using default y-limit range')
+            # else:
+            #     print('Using default y-limit range')
             fig.tight_layout()
             plt.savefig(savelabel+'.png',format='png',
                     bbox_inches='tight',dpi=300)
@@ -152,8 +152,8 @@ class PlotClass:
             plt.legend(numpoints=1,fontsize=18,loc='best')
             if set_ylim == True:
                 ax1.set_ylim(ylow,yhigh)
-            else:
-                print('Using default y-limit range')
+            # else:
+            #     print('Using default y-limit range')
             fig.tight_layout()
             plt.savefig(savelabel+'.png',format='png',
                     bbox_inches='tight',dpi=300)
