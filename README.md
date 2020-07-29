@@ -39,3 +39,27 @@ semilogyPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4)
 Just like the basicPlot() function but plots the X/Y pair on a Log-linear scale.
 
 ### _Basic_SAXS_Calcs.py_ ###
+
+A script that actually performs the SAXS calculations (P(r), Guiner, etc) and generates the class
+BasicSAXS().
+
+**(1)** 
+```python
+lineModel(x,m,b)
+```
+
+This function is used in other functions and simply defines a line.
+
+
+**(2)**
+```python
+lsq_w_sigma(X, Y, SIG)
+```
+This is a special version of linear least squares that uses 
+known sigma values of Y to calculate standard error in slope and intercept. 
+The actual fit is also SIGMA-weighted
+
+Outputs: slope(my), intercept(by), sigma slope(smy), sigma intercept (sby)
+
+## I hope these are useful to more people than myself ##
+## Best of luck ##
