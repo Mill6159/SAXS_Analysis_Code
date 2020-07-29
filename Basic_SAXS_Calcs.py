@@ -15,6 +15,7 @@ import subprocess
 import platform
 from numba import jit
 import math
+import traceback
 from PlotClass import *
 from FileParser import *
 
@@ -70,11 +71,11 @@ class BasicSAXS:
     These require numba, which speeds things up significantly.
     '''
 
-    @jit(nopython=True,cache=True,parallel=False)
+    @jit(nopython=True,cache=False,parallel=False)
     def linear_func(self,x,a,b):
         return a + b * x
 
-    @jit(nopython=True,cache=True,parallel=False)
+    @jit(nopython=True,cache=False,parallel=False)
     def calcRg(self,q,i,err,transform=True,error_weight=True):
         if transform:
             # Start out by transforming as usual.
@@ -163,14 +164,15 @@ class BasicSAXS:
     More advanced "autoRG" calculations
     '''
 
+    @jit(nopython=True,cache=False,parallel=False)
     def autoRg(self,q,i,err,single_fit=False,error_weight=True):
         # This function automatically calculates the radius of gyration and scattering intensity at zero angle
         # from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package
 
         # RM!
-        # q = q
-        # i = i
-        # err = err
+        q = q
+        i = i
+        err = err
         qmin,qmax = (0,len(q))
 
         q = q[qmin:qmax]
@@ -178,7 +180,7 @@ class BasicSAXS:
         err = err[qmin:qmax]
 
         try:
-            rg,rger,i0,i0er,idx_min,idx_max = autoRg_inner(q,i,err,qmin,single_fit,error_weight)
+            rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
         except Exception:  # Catches unexpected numba errors, I hope
             traceback.print_exc()
             rg = -1
@@ -190,7 +192,7 @@ class BasicSAXS:
 
         return rg,rger,i0,i0er,idx_min,idx_max
 
-    @jit(nopython=True,cache=True,parallel=False)
+    @jit(nopython=True,cache=False,parallel=False)
     def autoRg_inner(self,q,i,err,qmin,single_fit,error_weight):
         # Pick the start of the RG fitting range. Note that in autorg, this is done
         # by looking for strong deviations at low q from aggregation or structure factor
@@ -289,16 +291,16 @@ class BasicSAXS:
                 yerr = yerr[np.where(np.isfinite(y))]
                 y = y[np.where(np.isfinite(y))]
 
-                RG,I0,RGer,I0er,a,b = calcRg(x,y,yerr,transform=False,error_weight=error_weight)
+                RG,I0,RGer,I0er,a,b = self.calcRg(x,y,yerr,transform=False,error_weight=error_weight)
 
                 if RG > 0.1 and q[start] * RG < 1 and q[start + w - 1] * RG < 1.35 and RGer / RG <= 1:
 
-                    r_sqr = 1 - np.square(il[start:start + w] - linear_func(qs[start:start + w],a,b)).sum() / np.square(
+                    r_sqr = 1 - np.square(il[start:start + w] - self.linear_func(qs[start:start + w],a,b)).sum() / np.square(
                         il[start:start + w] - il[start:start + w].mean()).sum()
 
                     if r_sqr > .15:
                         chi_sqr = np.square(
-                            (il[start:start + w] - linear_func(qs[start:start + w],a,b)) / iler[start:start + w]).sum()
+                            (il[start:start + w] - self.linear_func(qs[start:start + w],a,b)) / iler[start:start + w]).sum()
 
                         # All of my reduced chi_squared values are too small, so I suspect something isn't right with that.
                         # Values less than one tend to indicate either a wrong degree of freedom, or a serious overestimate
