@@ -8,7 +8,14 @@
 A script that builds the class FileParser(). This class reads in file types from subtracted SAXS profiles (.dat)
 to GNOM and DATGNOM output files (.out). I will describe each of the functions below:
 
-**(1)** loadOutFile()
+**(1)** 
+
+```python
+loadOutFile(filename)
+```
+This function reads the output from the runGNOM() or runDatgnom() functions available in Basic_SAXS_Calcs.py.
+In fact, it just reads the output file (which is a bit messy) from GNOM and DATGNOM and does some preliminary processing
+for downstream use. If the .out file is not in the current working directory, the filepath must be specified along with the file name.
 
 ### _PlotClass.py_ ###
 
@@ -28,5 +35,7 @@ savelabel is the label of the .png file (i.e. savelabel.png) output into the cur
 ```python
 semilogyPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4)
 ```
+
+Just like the basicPlot() function but plots the X/Y pair on a Log-linear scale.
 
 ### _Basic_SAXS_Calcs.py_ ###
