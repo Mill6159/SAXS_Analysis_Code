@@ -5,7 +5,10 @@
 
 ### _FileParser.py_ ###
 
-A script that builds the class FileParser(). This class..
+A script that builds the class FileParser(). This class reads in file types from subtracted SAXS profiles (.dat)
+to GNOM and DATGNOM output files (.out). I will describe each of the functions below:
+
+**(1)** loadOutFile()
 
 ### _PlotClass.py_ ###
 
