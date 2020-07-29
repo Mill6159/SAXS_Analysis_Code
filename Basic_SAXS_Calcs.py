@@ -223,34 +223,68 @@ class BasicSAXS:
     '''
 
     # @jit(nopython=True,cache=False,parallel=False)
-    def autoRg(self,q,i,err,single_fit=False,error_weight=True):
-        # This function automatically calculates the radius of gyration and scattering intensity at zero angle
-        # from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package
+    def autoRg(self,q,i,err,single_fit=False,error_weight=True,plot=True,
+               lowQclip=0,output_suppress=False):
+        '''This function automatically calculates the radius of gyration and scattering intensity at zero angle
+        from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package'''
+
+        if output_suppress is not True:
+            print('--------------------------------------------------------------------------')
+            print('################################################################')
+            print('AutoRg calculations beginning..')
 
         # RM!
-        warnings.filterwarnings("ignore",category=RuntimeWarning)
+        warnings.filterwarnings("ignore",category=RuntimeWarning) # deals with dividing through by zero issues, which will generate a RuntimeWarning
 
-        q = q
-        i = i
-        err = err
+        q = q[lowQclip:]
+        i = i[lowQclip:]
+        err = err[lowQclip:]
         qmin,qmax = (0,len(q))
 
         q = q[qmin:qmax]
         i = i[qmin:qmax]
         err = err[qmin:qmax]
-        rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
+        # rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
 
-        # try:
-        #     rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
-        # except Exception:  # Catches unexpected numba errors, I hope
-        #     print('Darn it, it did not work!')
-        # # traceback.print_exc()
-        #     rg = -1
-        #     rger = -1
-        #     i0 = -1
-        #     i0er = -1
-        #     idx_min = -1
-        #     idx_max = -1
+        try:
+            rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
+        except Exception:  # Catches unexpected numba errors, I hope
+            print('Darn it, AUTORG did not work!')
+            traceback.print_exc()
+            rg = -1
+            rger = -1
+            i0 = -1
+            i0er = -1
+            idx_min = -1
+            idx_max = -1
+
+        '''
+        Other possible errors..
+        '''
+
+        if rg==-1.00 and rger==-1.00:
+            print('AutoRg failed... Take a look at the profile and try manually fitting the GuinerError() function.')
+        else:
+            if output_suppress is not True:
+                print('autoRg predicts the Rg to be: %.2f +/- %.2f' % (rg,rger))
+                print('with a Guiner region of (qminRg, qmaxRg): %.2f, %.2f' % (q[idx_min] * rg,q[idx_max] * rg))
+
+        slope=(-rg**2)/3
+        inter=np.log(i0)
+
+
+        if plot==True:
+            self.plots.twoPlot(X=q[idx_min:idx_max]**2,Y1=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
+                               Y2=np.log(i[idx_min:idx_max]),savelabel='tkRubisCO_0MPa_AutoRg_Attempt',
+                               plotlabel1='AutoRg Guiner Model',plotlabel2='Experimental Data',
+                               xlabel='q$^{2}$($\\AA^{-2}$)',ylabel='ln(I(q))',linewidth=4)
+        else:
+            if output_suppress is not True:
+                print('No plots were generated. Set plot=True to visualize the result.')
+
+        if output_suppress is not True:
+            print('################################################################')
+            print('--------------------------------------------------------------------------')
 
         return rg,rger,i0,i0er,idx_min,idx_max
 
@@ -491,7 +525,7 @@ class BasicSAXS:
         return rg,rger,i0,i0er,idx_min,idx_max
 
     def runGNOM(self,file_path,output_name, gnom_nmin=50,
-        rmax=100,force_zero_rmin=None,force_zero_rmax=None,system=0,radius56=None,alpha=None,
+        rmax='Auto',force_zero_rmin=None,force_zero_rmax=None,system=0,radius56=None,alpha=None,
         plot=True):
         '''
         Need to fetch the following:
@@ -507,6 +541,8 @@ class BasicSAXS:
         To determine what that is run:
             > import os
             > print(os.getcwd())
+
+        rmax: options -- (1) 'Auto': AutoRg tries to determine Rg
 
         '''
 
@@ -530,10 +566,16 @@ class BasicSAXS:
                 result += str(element)
             return result
 
+        if rmax=='Auto':
+            print('Attempting to determine Rg using autoRg function on input file...')
+            data = np.loadtxt(file_path,dtype={'names':('Q','I(Q)','ERROR'),'formats':(np.float,np.float,np.float)},skiprows=4)
+            auto_rg_data = self.autoRg(q=data['Q'],i=data['I(Q)'],err=data['ERROR'],output_suppress=True)
+            rmax=auto_rg_data[0] # fetches Rg from autoRg
+            print('It worked! The input Rg is will be %.2f'%rmax)
 
 
-        # rmax=str(120) + ' ' # comment out once finished building
         rmax=str(rmax) + ' '
+
         if radius56==None:
             radius56=radius56
         else:
