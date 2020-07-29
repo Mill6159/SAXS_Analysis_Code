@@ -15,10 +15,18 @@ to GNOM and DATGNOM output files (.out). I will describe each of the functions b
 A script that builds the class PlotClass(). This class contains many functions for various different plots
 all built with matplotlib. I will describe each of the functions below:
 
-**(1)** basicPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='NOT PROVIDED'). This function
-takes in an X/Y pair, these of course must be of equal length. It also requires a plotlabel, which is placed into the legend.
+**(1)**
+```python
+basicPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='NOT PROVIDED')
+``` 
+This function takes in an X/Y pair, these of course must be of equal length. 
+It also requires a plotlabel, which is placed into the legend.
 savelabel is the label of the .png file (i.e. savelabel.png) output into the current working directory. xlabel/ylabel are self explanatory.
 
-**(2)** semilogyPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4)
+**(2)** 
+
+```python
+semilogyPlot(X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4)
+```
 
 ### _Basic_SAXS_Calcs.py_ ###
