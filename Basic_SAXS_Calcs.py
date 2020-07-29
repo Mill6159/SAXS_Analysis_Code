@@ -13,6 +13,8 @@ import sys
 import csv
 import subprocess
 import platform
+from numba import jit
+import math
 from PlotClass import *
 from FileParser import *
 
