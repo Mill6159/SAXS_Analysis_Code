@@ -65,6 +65,53 @@ class BasicSAXS:
     def lineModel(self,x,m,b):
         return m*x+b
 
+    '''
+    Input some functions necessary for AUTORG calculations
+    These require numba, which speeds things up significantly.
+    '''
+
+    @jit(nopython=True,cache=True,parallel=False)
+    def linear_func(self,x,a,b):
+        return a + b * x
+
+    @jit(nopython=True,cache=True,parallel=False)
+    def calcRg(self,q,i,err,transform=True,error_weight=True):
+        if transform:
+            # Start out by transforming as usual.
+            x = np.square(q)
+            y = np.log(i)
+            yerr = np.absolute(err / i)  # I know it looks odd, but it's correct for a natural log
+        else:
+            x = q
+            y = i
+            yerr = err
+
+        if error_weight:
+            a,b,cov_a,cov_b = weighted_lin_reg(x,y,yerr)
+        else:
+            a,b,cov_a,cov_b = lin_reg(x,y)
+
+        if b < 0:
+            RG = np.sqrt(-3. * b)
+            I0 = np.exp(a)
+
+            # error in rg and i0 is calculated by noting that q(x)+/-Dq has Dq=abs(dq/dx)Dx, where q(x) is your function you're using
+            # on the quantity x+/-Dx, with Dq and Dx as the uncertainties and dq/dx the derviative of q with respect to x.
+            RGer = np.absolute(0.5 * (np.sqrt(-3. / b))) * np.sqrt(np.absolute(cov_b))
+            I0er = I0 * np.sqrt(np.absolute(cov_a))
+
+        else:
+            RG = -1
+            I0 = -1
+            RGer = -1
+            I0er = -1
+
+        return RG,I0,RGer,I0er,a,b
+
+    '''
+    Functions for basic Guiner analysis
+    '''
+
     def lsq_w_sigma(self,X, Y, SIG):
         """ This is a special version of linear least squares that uses
         known sigma values of Y to calculate standard error in slope and
@@ -111,6 +158,273 @@ class BasicSAXS:
 
         return hbI0,hbRg,hbRg_Err,hb_qminRg,hb_qmaxRg,model
 
+
+    '''
+    More advanced "autoRG" calculations
+    '''
+
+    def autoRg(self,q,i,err,single_fit=False,error_weight=True):
+        # This function automatically calculates the radius of gyration and scattering intensity at zero angle
+        # from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package
+
+        # RM!
+        # q = q
+        # i = i
+        # err = err
+        qmin,qmax = (0,len(q))
+
+        q = q[qmin:qmax]
+        i = i[qmin:qmax]
+        err = err[qmin:qmax]
+
+        try:
+            rg,rger,i0,i0er,idx_min,idx_max = autoRg_inner(q,i,err,qmin,single_fit,error_weight)
+        except Exception:  # Catches unexpected numba errors, I hope
+            traceback.print_exc()
+            rg = -1
+            rger = -1
+            i0 = -1
+            i0er = -1
+            idx_min = -1
+            idx_max = -1
+
+        return rg,rger,i0,i0er,idx_min,idx_max
+
+    @jit(nopython=True,cache=True,parallel=False)
+    def autoRg_inner(self,q,i,err,qmin,single_fit,error_weight):
+        # Pick the start of the RG fitting range. Note that in autorg, this is done
+        # by looking for strong deviations at low q from aggregation or structure factor
+        # or instrumental scattering, and ignoring those. This function isn't that advanced
+        # so we start at 0.
+
+        # Note, in order to speed this up using numba, I had to do some unpythonic things
+        # with declaring lists ahead of time, and making sure lists didn't have multiple
+        # object types in them. It makes the code a bit more messy than the original
+        # version, but numba provides a significant speedup.
+        data_start = 0
+
+        # Following the atsas package, the end point of our search space is the q value
+        # where the intensity has droped by an order of magnitude from the initial value.
+        data_end = np.abs(i - i[data_start] / 10.).argmin()
+
+        # This makes sure we're not getting some weird fluke at the end of the scattering profile.
+        if data_end > len(q) / 2.:
+            found = False
+            idx = 0
+            while not found:
+                idx = idx + 1
+                if i[idx] < i[0] / 10.:
+                    found = True
+                elif idx == len(q) - 1:
+                    found = True
+            data_end = idx
+
+        # Start out by transforming as usual.
+        qs = np.square(q)
+        il = np.log(i)
+        iler = np.absolute(err / i)
+
+        # Pick a minimum fitting window size. 10 is consistent with atsas autorg.
+        min_window = 10
+
+        max_window = data_end - data_start
+
+        if max_window < min_window:
+            max_window = min_window
+
+        # It is very time consuming to search every possible window size and every possible starting point.
+        # Here we define a subset to search.
+        tot_points = max_window
+        window_step = tot_points // 10
+        data_step = tot_points // 50
+
+        if window_step == 0:
+            window_step = 1
+        if data_step == 0:
+            data_step = 1
+
+        window_list = [0 for k in range(int(math.ceil((max_window - min_window) / float(window_step))) + 1)]
+
+        for k in range(int(math.ceil((max_window - min_window) / float(window_step)))):
+            window_list[k] = min_window + k * window_step
+
+        window_list[-1] = max_window
+
+        num_fits = 0
+
+        for w in window_list:
+            num_fits = num_fits + int(math.ceil((data_end - w - data_start) / float(data_step)))
+
+        if num_fits < 0:
+            num_fits = 1
+
+        start_list = [0 for k in range(num_fits)]
+        w_list = [0 for k in range(num_fits)]
+        q_start_list = [0. for k in range(num_fits)]
+        q_end_list = [0. for k in range(num_fits)]
+        rg_list = [0. for k in range(num_fits)]
+        rger_list = [0. for k in range(num_fits)]
+        i0_list = [0. for k in range(num_fits)]
+        i0er_list = [0. for k in range(num_fits)]
+        qrg_start_list = [0. for k in range(num_fits)]
+        qrg_end_list = [0. for k in range(num_fits)]
+        rsqr_list = [0. for k in range(num_fits)]
+        chi_sqr_list = [0. for k in range(num_fits)]
+        reduced_chi_sqr_list = [0. for k in range(num_fits)]
+
+        success = np.zeros(num_fits)
+
+        current_fit = 0
+        # This function takes every window size in the window list, stepts it through the data range, and
+        # fits it to get the RG and I0. If basic conditions are met, qmin*RG<1 and qmax*RG<1.35, and RG>0.1,
+        # We keep the fit.
+        for w in window_list:
+            for start in range(data_start,data_end - w,data_step):
+                x = qs[start:start + w]
+                y = il[start:start + w]
+                yerr = iler[start:start + w]
+
+                # Remove NaN and Inf values:
+                x = x[np.where(np.isfinite(y))]
+                yerr = yerr[np.where(np.isfinite(y))]
+                y = y[np.where(np.isfinite(y))]
+
+                RG,I0,RGer,I0er,a,b = calcRg(x,y,yerr,transform=False,error_weight=error_weight)
+
+                if RG > 0.1 and q[start] * RG < 1 and q[start + w - 1] * RG < 1.35 and RGer / RG <= 1:
+
+                    r_sqr = 1 - np.square(il[start:start + w] - linear_func(qs[start:start + w],a,b)).sum() / np.square(
+                        il[start:start + w] - il[start:start + w].mean()).sum()
+
+                    if r_sqr > .15:
+                        chi_sqr = np.square(
+                            (il[start:start + w] - linear_func(qs[start:start + w],a,b)) / iler[start:start + w]).sum()
+
+                        # All of my reduced chi_squared values are too small, so I suspect something isn't right with that.
+                        # Values less than one tend to indicate either a wrong degree of freedom, or a serious overestimate
+                        # of the error bars for the system.
+                        dof = w - 2.
+                        reduced_chi_sqr = chi_sqr / dof
+
+                        start_list[current_fit] = start
+                        w_list[current_fit] = w
+                        q_start_list[current_fit] = q[start]
+                        q_end_list[current_fit] = q[start + w - 1]
+                        rg_list[current_fit] = RG
+                        rger_list[current_fit] = RGer
+                        i0_list[current_fit] = I0
+                        i0er_list[current_fit] = I0er
+                        qrg_start_list[current_fit] = q[start] * RG
+                        qrg_end_list[current_fit] = q[start + w - 1] * RG
+                        rsqr_list[current_fit] = r_sqr
+                        chi_sqr_list[current_fit] = chi_sqr
+                        reduced_chi_sqr_list[current_fit] = reduced_chi_sqr
+
+                        # fit_list[current_fit] = [start, w, q[start], q[start+w-1], RG, RGer, I0, I0er, q[start]*RG, q[start+w-1]*RG, r_sqr, chi_sqr, reduced_chi_sqr]
+                        success[current_fit] = 1
+
+                current_fit = current_fit + 1
+        # Extreme cases: may need to relax the parameters.
+        if np.sum(success) == 0:
+            # Stuff goes here
+            pass
+
+        if np.sum(success) > 0:
+
+            fit_array = np.array([[start_list[k],w_list[k],q_start_list[k],
+                                   q_end_list[k],rg_list[k],rger_list[k],i0_list[k],i0er_list[k],
+                                   qrg_start_list[k],qrg_end_list[k],rsqr_list[k],chi_sqr_list[k],
+                                   reduced_chi_sqr_list[k]] for k in range(num_fits) if success[k] == 1])
+
+            # Now we evaluate the quality of the fits based both on fitting data and on other criteria.
+
+            # Choice of weights is pretty arbitrary. This set seems to yield results similar to the atsas autorg
+            # for the few things I've tested.
+            qmaxrg_weight = 1
+            qminrg_weight = 1
+            rg_frac_err_weight = 1
+            i0_frac_err_weight = 1
+            r_sqr_weight = 4
+            reduced_chi_sqr_weight = 0
+            window_size_weight = 4
+
+            weights = np.array([qmaxrg_weight,qminrg_weight,rg_frac_err_weight,i0_frac_err_weight,r_sqr_weight,
+                                reduced_chi_sqr_weight,window_size_weight])
+
+            quality = np.zeros(len(fit_array))
+
+            max_window_real = float(window_list[-1])
+
+            # all_scores = [np.array([]) for k in range(len(fit_array))]
+
+            # This iterates through all the fits, and calculates a score. The score is out of 1, 1 being the best, 0 being the worst.
+            indices = list(range(len(fit_array)))
+            for a in indices:
+                k = int(a)  # This is stupid and should not be necessary. Numba bug?
+
+                # Scores all should be 1 based. Reduced chi_square score is not, hence it not being weighted.
+                qmaxrg_score = 1 - abs((fit_array[k,9] - 1.3) / 1.3)
+                qminrg_score = 1 - fit_array[k,8]
+                rg_frac_err_score = 1 - fit_array[k,5] / fit_array[k,4]
+                i0_frac_err_score = 1 - fit_array[k,7] / fit_array[k,6]
+                r_sqr_score = fit_array[k,10]
+                reduced_chi_sqr_score = 1 / fit_array[k,12]  # Not right
+                window_size_score = fit_array[k,1] / max_window_real
+
+                scores = np.array([qmaxrg_score,qminrg_score,rg_frac_err_score,i0_frac_err_score,r_sqr_score,
+                                   reduced_chi_sqr_score,window_size_score])
+
+                total_score = (weights * scores).sum() / weights.sum()
+
+                quality[k] = total_score
+
+                # all_scores[k] = scores
+
+            # I have picked an aribtrary threshold here. Not sure if 0.6 is a good quality cutoff or not.
+            if quality.max() > 0.6:
+                if not single_fit:
+                    idx = quality.argmax()
+                    rg = fit_array[:,4][quality > quality[idx] - .1].mean()
+                    rger = fit_array[:,5][quality > quality[idx] - .1].std()
+                    i0 = fit_array[:,6][quality > quality[idx] - .1].mean()
+                    i0er = fit_array[:,7][quality > quality[idx] - .1].std()
+                    idx_min = int(fit_array[idx,0])
+                    idx_max = int(fit_array[idx,0] + fit_array[idx,1] - 1)
+                else:
+                    idx = quality.argmax()
+                    rg = fit_array[idx,4]
+                    rger = fit_array[idx,5]
+                    i0 = fit_array[idx,6]
+                    i0er = fit_array[idx,7]
+                    idx_min = int(fit_array[idx,0])
+                    idx_max = int(fit_array[idx,0] + fit_array[idx,1] - 1)
+
+            else:
+                rg = -1
+                rger = -1
+                i0 = -1
+                i0er = -1
+                idx_min = -1
+                idx_max = -1
+
+        else:
+            rg = -1
+            rger = -1
+            i0 = -1
+            i0er = -1
+            idx_min = -1
+            idx_max = -1
+            # quality = []
+            # all_scores = []
+
+        idx_min = idx_min + qmin
+        idx_max = idx_max + qmin
+
+        # We could add another function here, if not good quality fits are found, either reiterate through the
+        # the data and refit with looser criteria, or accept lower scores, possibly with larger error bars.
+
+        # returns Rg, Rg error, I0, I0 error, the index of the first q point of the fit and the index of the last q point of the fit
+        return rg,rger,i0,i0er,idx_min,idx_max
 
     def runGNOM(self,file_path,output_name, gnom_nmin=50,
         rmax=100,force_zero_rmin=None,force_zero_rmax=None,system=0,radius56=None,alpha=None,
