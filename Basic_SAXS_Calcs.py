@@ -72,11 +72,62 @@ class BasicSAXS:
     '''
 
     @jit(nopython=True,cache=False,parallel=False)
-    def linear_func(self,x,a,b):
+    def linear_func(x,a,b):
         return a + b * x
 
+    @jit(nopython=True,cache=True,parallel=False)
+    def lin_reg(x,y):
+        x_sum = x.sum()
+        xsq_sum = (x ** 2).sum()
+        y_sum = y.sum()
+        xy_sum = (x * y).sum()
+        n = len(x)
+
+        delta = n * xsq_sum - x_sum ** 2.
+
+        if delta != 0:
+            a = (xsq_sum * y_sum - x_sum * xy_sum) / delta
+            b = (n * xy_sum - x_sum * y_sum) / delta
+
+            cov_y = (1. / (n - 2.)) * ((y - a - b * x) ** 2.).sum()
+            cov_a = cov_y * (xsq_sum / delta)
+            cov_b = cov_y * (n / delta)
+        else:
+            a = -1
+            b = -1
+            cov_a = -1
+            cov_b = -1
+
+        return a,b,cov_a,cov_b
+
+    @jit(nopython=True,cache=True,parallel=False)
+    def weighted_lin_reg(x,y,err):
+        weights = 1. / (err) ** 2.
+
+        w_sum = weights.sum()
+        wy_sum = (weights * y).sum()
+        wx_sum = (weights * x).sum()
+        wxsq_sum = (weights * x ** 2.).sum()
+        wxy_sum = (weights * x * y).sum()
+
+        delta = weights.sum() * wxsq_sum - (wx_sum) ** 2.
+
+        if delta != 0:
+            a = (wxsq_sum * wy_sum - wx_sum * wxy_sum) / delta
+            b = (w_sum * wxy_sum - wx_sum * wy_sum) / delta
+
+            cov_a = wxsq_sum / delta
+            cov_b = w_sum / delta
+        else:
+            a = -1
+            b = -1
+            cov_a = -1
+            cov_b = -1
+
+        return a,b,cov_a,cov_b
+
     @jit(nopython=True,cache=False,parallel=False)
-    def calcRg(self,q,i,err,transform=True,error_weight=True):
+    def calcRg(q,i,err,transform=True,error_weight=True):
         if transform:
             # Start out by transforming as usual.
             x = np.square(q)
@@ -107,7 +158,7 @@ class BasicSAXS:
             RGer = -1
             I0er = -1
 
-        return RG,I0,RGer,I0er,a,b
+        return RG,I0,RGer,I0er,a,bb
 
     '''
     Functions for basic Guiner analysis
@@ -165,7 +216,7 @@ class BasicSAXS:
     '''
 
     @jit(nopython=True,cache=False,parallel=False)
-    def autoRg(self,q,i,err,single_fit=False,error_weight=True):
+    def autoRg(q,i,err,single_fit=False,error_weight=True):
         # This function automatically calculates the radius of gyration and scattering intensity at zero angle
         # from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package
 
@@ -180,20 +231,21 @@ class BasicSAXS:
         err = err[qmin:qmax]
 
         try:
-            rg,rger,i0,i0er,idx_min,idx_max = self.autoRg_inner(q,i,err,qmin,single_fit,error_weight)
+            rg,rger,i0,i0er,idx_min,idx_max = autoRg_inner(q,i,err,qmin,single_fit,error_weight)
         except Exception:  # Catches unexpected numba errors, I hope
-            traceback.print_exc()
-            rg = -1
-            rger = -1
-            i0 = -1
-            i0er = -1
-            idx_min = -1
-            idx_max = -1
+            print('Darn it, it did not work!')
+        # traceback.print_exc()
+        # rg = -1
+        # rger = -1
+        # i0 = -1
+        # i0er = -1
+        # idx_min = -1
+        # idx_max = -1
 
         return rg,rger,i0,i0er,idx_min,idx_max
 
     @jit(nopython=True,cache=False,parallel=False)
-    def autoRg_inner(self,q,i,err,qmin,single_fit,error_weight):
+    def autoRg_inner(q,i,err,qmin,single_fit,error_weight):
         # Pick the start of the RG fitting range. Note that in autorg, this is done
         # by looking for strong deviations at low q from aggregation or structure factor
         # or instrumental scattering, and ignoring those. This function isn't that advanced
@@ -291,16 +343,16 @@ class BasicSAXS:
                 yerr = yerr[np.where(np.isfinite(y))]
                 y = y[np.where(np.isfinite(y))]
 
-                RG,I0,RGer,I0er,a,b = self.calcRg(x,y,yerr,transform=False,error_weight=error_weight)
+                RG,I0,RGer,I0er,a,b = calcRg(x,y,yerr,transform=False,error_weight=error_weight)
 
                 if RG > 0.1 and q[start] * RG < 1 and q[start + w - 1] * RG < 1.35 and RGer / RG <= 1:
 
-                    r_sqr = 1 - np.square(il[start:start + w] - self.linear_func(qs[start:start + w],a,b)).sum() / np.square(
+                    r_sqr = 1 - np.square(il[start:start + w] - linear_func(qs[start:start + w],a,b)).sum() / np.square(
                         il[start:start + w] - il[start:start + w].mean()).sum()
 
                     if r_sqr > .15:
                         chi_sqr = np.square(
-                            (il[start:start + w] - self.linear_func(qs[start:start + w],a,b)) / iler[start:start + w]).sum()
+                            (il[start:start + w] - linear_func(qs[start:start + w],a,b)) / iler[start:start + w]).sum()
 
                         # All of my reduced chi_squared values are too small, so I suspect something isn't right with that.
                         # Values less than one tend to indicate either a wrong degree of freedom, or a serious overestimate
