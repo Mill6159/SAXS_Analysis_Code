@@ -479,7 +479,7 @@ class BasicSAXS:
                 # all_scores[k] = scores
 
             # I have picked an aribtrary threshold here. Not sure if 0.6 is a good quality cutoff or not.
-            if quality.max() > 0.6:
+            if quality.max() > 0.50: # RM!
                 if not single_fit:
                     idx = quality.argmax()
                     rg = fit_array[:,4][quality > quality[idx] - .1].mean()
@@ -751,7 +751,8 @@ class BasicSAXS:
 
         print('--------------------------------------------------------------------------')
 
-    def runDatgnom(self, file_path, save_path, outname,rg='Auto', first_pt=None, last_pt=None,plot=True):
+    def runDatgnom(self, file_path, save_path, outname,rg='Auto', first_pt=None, last_pt=None,plot=True,
+                   lowclip=0):
         '''
         Adopted from RAW2.0.2
         Parameters
@@ -798,15 +799,22 @@ class BasicSAXS:
 
         '''
         Building the command to pass to DATGNOM
-        And adding AutoRG capabilities!
+        And adding AutoRG capabilities! I've tried to build it to catch most errors.. 
+        again, slightly modified from RAW code.
         '''
         if rg=='Auto':
             print('Attempting to determine Rg using autoRg function on input file...')
-            data = np.loadtxt(file_path,dtype={'names':('Q','I(Q)','ERROR'),'formats':(np.float,np.float,np.float)},skiprows=4)
-            auto_rg_data = self.autoRg(q=data['Q'],i=data['I(Q)'],err=data['ERROR'],output_suppress=True)
-            rg= auto_rg_data[0] # fetches Rg from autoRg
-            rg_print=auto_rg_data[0]
-            print('It worked! The input Rg is will be %.2f'%rg_print)
+            try:
+                data = np.loadtxt(file_path,dtype={'names':('Q','I(Q)','ERROR'),'formats':(np.float,np.float,np.float)},skiprows=4)
+                auto_rg_data = self.autoRg(q=data['Q'][lowclip:],i=data['I(Q)'][lowclip:],err=data['ERROR'][lowclip:],output_suppress=False)
+                rg= auto_rg_data[0] # fetches Rg from autoRg
+                if rg == -1.00:
+                    print('Terminating analysis..')
+                    sys.exit()
+            except Exception as e:
+                print('Terminating analysis..')
+                print(e)
+                sys.exit()
         else:
             rg = rg
 
@@ -872,7 +880,7 @@ class BasicSAXS:
             print('From DATGNOM calculated P(r) the Dmax is reported as: %.2f' % results['dmax'])
 
             if plot == True:
-                self.plots.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=outname,
+                self.plots.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=outname+'_DatGNOM_PDDF',
                                    plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
                                    xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
                 self.plots.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1='Expt',
