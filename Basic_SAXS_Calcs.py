@@ -570,11 +570,12 @@ class BasicSAXS:
             print('Attempting to determine Rg using autoRg function on input file...')
             data = np.loadtxt(file_path,dtype={'names':('Q','I(Q)','ERROR'),'formats':(np.float,np.float,np.float)},skiprows=4)
             auto_rg_data = self.autoRg(q=data['Q'],i=data['I(Q)'],err=data['ERROR'],output_suppress=True)
-            rmax=auto_rg_data[0] # fetches Rg from autoRg
-            print('It worked! The input Rg is will be %.2f'%rmax)
+            rmax= str(auto_rg_data[0]) + ' ' # fetches Rg from autoRg
+            rmax_print=auto_rg_data[0]
+            print('It worked! The input Rg is will be %.2f'%rmax_print)
+        else:
+            rmax = str(rmax) + ' '
 
-
-        rmax=str(rmax) + ' '
 
         if radius56==None:
             radius56=radius56
@@ -739,7 +740,7 @@ class BasicSAXS:
         print('From GNOM calculated P(r) the Dmax is reported as: %.2f'%results['dmax'])
 
         if plot==True:
-            self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel='tkRubisCO_0MPa_GNOM_PDDF',
+            self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel=output_name+'_PDDF',
                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
                     xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
             self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
@@ -750,7 +751,7 @@ class BasicSAXS:
 
         print('--------------------------------------------------------------------------')
 
-    def runDatgnom(self,rg, file_path, save_path, outname, first_pt=None, last_pt=None,plot=True):
+    def runDatgnom(self, file_path, save_path, outname,rg='Auto', first_pt=None, last_pt=None,plot=True):
         '''
         Adopted from RAW2.0.2
         Parameters
@@ -773,12 +774,7 @@ class BasicSAXS:
         print('###################################################################')
         print('DATGNOM P(r) calculations beginning')
 
-        '''
-        Add an AUTORG functionaility
-        '''
 
-        # if rg=='':
-        #     hbI0,Rg,hbRg_Err,hb_qminRg,hb_qmaxRg,model=Guiner_Error(q,I,I_Err,nmin,nmax,file='No File Description Provided')
 
         '''
         If no save path is provided, dump the file in the current working directory.
@@ -802,7 +798,17 @@ class BasicSAXS:
 
         '''
         Building the command to pass to DATGNOM
+        And adding AutoRG capabilities!
         '''
+        if rg=='Auto':
+            print('Attempting to determine Rg using autoRg function on input file...')
+            data = np.loadtxt(file_path,dtype={'names':('Q','I(Q)','ERROR'),'formats':(np.float,np.float,np.float)},skiprows=4)
+            auto_rg_data = self.autoRg(q=data['Q'],i=data['I(Q)'],err=data['ERROR'],output_suppress=True)
+            rg= auto_rg_data[0] # fetches Rg from autoRg
+            rg_print=auto_rg_data[0]
+            print('It worked! The input Rg is will be %.2f'%rg_print)
+        else:
+            rg = rg
 
         if os.path.exists(datgnomDir):
             cmd = 'cd; ' + '"{}" -o "{}" -r {} '.format(datgnomDir,save_path+outname,rg)

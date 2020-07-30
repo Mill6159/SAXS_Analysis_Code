@@ -93,7 +93,7 @@ class PlotClass:
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
         plt.plot(X,Y1,'-',label=plotlabel1,
-                 linewidth=linewidth,
+                 linewidth=linewidth+2,
                  color='#E55334')
         plt.plot(X,Y2,'o',label=plotlabel2,
                  color='#1283BC')
