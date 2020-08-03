@@ -333,6 +333,69 @@ class PlotClass:
         self.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1=plotlabel3,plotlabel2=plotlabel4,
                                  savelabel=savelabel2,xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
 
+    def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[], ylabel1='No label provided', ylabel2='No label provided',xlabel='No label provided',
+                          Label1='',
+                          Label2='',saveLabel='Vertical_Residuals'):
+        '''
+        Second plot is a residual plot, therefore X2/Y2 should be the model.. Also, X1 must = x2
+        '''
+        plt.rcParams['xtick.major.pad'] = 10
+        plt.rcParams['ytick.major.pad'] = 10
+        plt.rcParams['axes.linewidth'] = 2
+        fg = plt.figure(figsize=(15,12))
+        ax = plt.subplot2grid((3,3),(0,0),rowspan=2,colspan=3)
+        ax2 = plt.subplot2grid((3,3),(2,0),rowspan=1,colspan=3)
+        plt.rc("axes",linewidth=2)
+        plt.rc('font',**{"sans-serif":["Helvetica"]})
+        ax.plot(X1,Y1,
+                color='k',
+                marker='o',
+                markersize=3,
+                linestyle='None',
+                label=Label1)
+        ax.plot(X2,Y2,
+                color='#7F817F',
+                linestyle='-',
+                linewidth=3,
+                label=Label2)
+        ax.set_ylabel(ylabel1,size=20)
+        ax.legend(numpoints=1,fontsize=18,loc="best")
+        ax.xaxis.set_tick_params(which='both',width=2)
+        ax.set_xticklabels([])
+        ax.yaxis.set_tick_params(which='both',width=2)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20)
+            tick.label1.set_fontname('Helvetica')
+        ax2.plot(X1,((Y1 - Y2)) / ((Y1err)),
+                 color='k',
+                 linestyle='-',
+                 linewidth=2,
+                 label=ylabel2)
+        ax2.plot(X1,[0] * len(Y1),
+                 color='k',
+                 linestyle='--',
+                 linewidth=2)
+        ax2.set_xlabel(xlabel,size=20) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'
+        ax2.set_ylabel('$(\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}) \cdot (\\frac{1}{\sigma_{expt}})$',size=20)
+        # $\\frac{\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}}{\sigma_{expt}}$
+        # \\frac{ln(I_{expt}(q))}{ln(I_{model}(q))} \cdot \\frac{1}{\sigma_{expt}}
+        ax2.legend(numpoints=1,fontsize=18,loc="best")
+        # ax2.set_xlim(q[nmin],0.71)
+        # ax.set_ylim(0.01,0.025)
+        ax2.xaxis.set_tick_params(which='both',width=2)
+        ax2.yaxis.set_tick_params(which='both',width=2)
+        for tick in ax2.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20)
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax2.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20)
+            tick.label1.set_fontname('Helvetica')
+        ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
+        fg.tight_layout()
+        plt.savefig(saveLabel + 'VerticalStack_plot.png',
+                    format='png',dpi=500,bbox_inches='tight')
+        plt.show()
+
 
 
 

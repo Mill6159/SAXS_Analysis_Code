@@ -192,7 +192,7 @@ class BasicSAXS:
         # outputs slope(my), intercept(by), sigma slope(smy), sigma intercept (sby)
         return my, by, smy, sby
 
-    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided'):
+    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided', plot=True):
         '''
         Describe basic function here
         '''
@@ -213,7 +213,10 @@ class BasicSAXS:
         print('The Rg is approximately %.2f'%hbRg + ' ' + '+/- %.2f'%(hbRg_Err) + 'Angstroms')
         print('The guiner range is approximately: (qminRg, qmaxRg) - %.2f, %.2f' % (hb_qminRg,hb_qmaxRg))
 
-
+        if plot==True:
+            self.plots.vertical_stackPlot(X1=q[nmin:nmax] ** 2,Y1=np.log(I[nmin:nmax]),Y1err=np.log(I_Err[nmin:nmax]),X2=q[nmin:nmax]**2,Y2=model[nmin:nmax],
+                                          ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
+                                          Label1='Expt',Label2='Model')
 
         return hbI0,hbRg,hbRg_Err,hb_qminRg,hb_qmaxRg,model
 
