@@ -227,7 +227,7 @@ class BasicSAXS:
 
     # @jit(nopython=True,cache=False,parallel=False)
     def autoRg(self,q,i,err,single_fit=False,error_weight=True,plot=True,
-               lowQclip=0,output_suppress=False):
+               lowQclip=0,output_suppress=False,saveLabel='AutoRg'):
         '''This function automatically calculates the radius of gyration and scattering intensity at zero angle
         from a given scattering profile. It roughly follows the method used by the autorg function in the atsas package'''
 
@@ -235,6 +235,7 @@ class BasicSAXS:
             print('--------------------------------------------------------------------------')
             print('################################################################')
             print('AutoRg calculations beginning..')
+            print('We will cutoff %.2f points at the beginning of the profile'%lowQclip)
 
         # RM!
         warnings.filterwarnings("ignore",category=RuntimeWarning) # deals with dividing through by zero issues, which will generate a RuntimeWarning
@@ -277,10 +278,13 @@ class BasicSAXS:
 
 
         if plot==True:
-            self.plots.twoPlot(X=q[idx_min:idx_max]**2,Y1=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
-                               Y2=np.log(i[idx_min:idx_max]),savelabel='tkRubisCO_0MPa_AutoRg_Attempt',
-                               plotlabel1='AutoRg Guiner Model',plotlabel2='Experimental Data',
-                               xlabel='q$^{2}$($\\AA^{-2}$)',ylabel='ln(I(q))',linewidth=4)
+            # self.plots.twoPlot(X=q[idx_min:idx_max]**2,Y1=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
+            #                    Y2=np.log(i[idx_min:idx_max]),savelabel='tkRubisCO_0MPa_AutoRg_Attempt',
+            #                    plotlabel1='AutoRg Guiner Model',plotlabel2='Experimental Data',
+            #                    xlabel='q$^{2}$($\\AA^{-2}$)',ylabel='ln(I(q))',linewidth=4)
+            self.plots.vertical_stackPlot(X1=q[idx_min:idx_max] ** 2,Y1=np.log(i[idx_min:idx_max]),Y1err=np.log(err[idx_min:idx_max]),X2=q[idx_min:idx_max]**2,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
+                                          ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+                                          Label1='Expt',Label2='Model',saveLabel=saveLabel)
         else:
             if output_suppress is not True:
                 print('No plots were generated. Set plot=True to visualize the result.')
@@ -359,6 +363,10 @@ class BasicSAXS:
         if num_fits < 0:
             num_fits = 1
 
+        ''' 
+        Initializing a bunch of lists..
+        '''
+
         start_list = [0 for k in range(num_fits)]
         w_list = [0 for k in range(num_fits)]
         q_start_list = [0. for k in range(num_fits)]
@@ -390,9 +398,11 @@ class BasicSAXS:
                 yerr = yerr[np.where(np.isfinite(y))]
                 y = y[np.where(np.isfinite(y))]
 
+                qmaxRgLimit=1.55
+
                 RG,I0,RGer,I0er,a,b = self.calcRg(x,y,yerr,transform=False,error_weight=error_weight)
 
-                if RG > 0.1 and q[start] * RG < 1 and q[start + w - 1] * RG < 1.35 and RGer / RG <= 1:
+                if RG > 0.1 and q[start] * RG < 1 and q[start + w - 1] * RG < qmaxRgLimit and RGer / RG <= 1:
 
                     r_sqr = 1 - np.square(il[start:start + w] - self.linear_func(qs[start:start + w],a,b)).sum() / np.square(
                         il[start:start + w] - il[start:start + w].mean()).sum()
@@ -422,9 +432,9 @@ class BasicSAXS:
                         reduced_chi_sqr_list[current_fit] = reduced_chi_sqr
 
                         # fit_list[current_fit] = [start, w, q[start], q[start+w-1], RG, RGer, I0, I0er, q[start]*RG, q[start+w-1]*RG, r_sqr, chi_sqr, reduced_chi_sqr]
-                        success[current_fit] = 1
+                        success[current_fit] = 1 # success was an empty array of zeroes
 
-                current_fit = current_fit + 1
+                current_fit = current_fit + 1 # starts at 0, adds a value each time we iterate through the loop.
         # Extreme cases: may need to relax the parameters.
         if np.sum(success) == 0:
             # Stuff goes here
