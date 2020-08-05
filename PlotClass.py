@@ -333,10 +333,24 @@ class PlotClass:
         self.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1=plotlabel3,plotlabel2=plotlabel4,
                                  savelabel=savelabel2,xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
 
-    def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[], ylabel1='No label provided', ylabel2='No label provided',xlabel='No label provided',
-                          Label1='',
-                          Label2='',saveLabel='Vertical_Residuals'):
+    def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[],ylabel1='No label provided',ylabel2='No label provided',xlabel='No label provided',
+                           Label1='',
+                           Label2='',saveLabel='Vertical_Residuals',bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$'):
         '''
+        X1:
+        X2:
+        Y1:
+        Y1err:
+        Y2:
+        ylabel1:
+        ylabel2:
+        xlabel:
+        Label1:
+        Label2:
+        saveLabel:
+        bottomPlot_yLabel:
+
+
         Second plot is a residual plot, therefore X2/Y2 should be the model.. Also, X1 must = x2
         '''
         plt.rcParams['xtick.major.pad'] = 10
@@ -376,7 +390,7 @@ class PlotClass:
                  linestyle='--',
                  linewidth=2)
         ax2.set_xlabel(xlabel,size=20) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'
-        ax2.set_ylabel('$(\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}) \cdot (\\frac{1}{\sigma_{expt}})$',size=20)
+        ax2.set_ylabel(bottomPlot_yLabel,size=20)
         # $\\frac{\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}}{\sigma_{expt}}$
         # \\frac{ln(I_{expt}(q))}{ln(I_{model}(q))} \cdot \\frac{1}{\sigma_{expt}}
         ax2.legend(numpoints=1,fontsize=18,loc="best")

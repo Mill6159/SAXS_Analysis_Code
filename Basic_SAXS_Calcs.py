@@ -57,7 +57,7 @@ class BasicSAXS:
                 print('We will terminate the script...')
                 sys.exit('Analysis terminated!!!')
             else:
-                print('The GNOM library was found (!!!) in the directory: %s. If this is the incorrect library, the calculation may fail'%gnom_dir)
+                print('The GNOM library was found in the directory: %s. \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
             print('##############################################################')
         else:
             print('#######################')
@@ -278,10 +278,6 @@ class BasicSAXS:
 
 
         if plot==True:
-            # self.plots.twoPlot(X=q[idx_min:idx_max]**2,Y1=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
-            #                    Y2=np.log(i[idx_min:idx_max]),savelabel='tkRubisCO_0MPa_AutoRg_Attempt',
-            #                    plotlabel1='AutoRg Guiner Model',plotlabel2='Experimental Data',
-            #                    xlabel='q$^{2}$($\\AA^{-2}$)',ylabel='ln(I(q))',linewidth=4)
             self.plots.vertical_stackPlot(X1=q[idx_min:idx_max] ** 2,Y1=np.log(i[idx_min:idx_max]),Y1err=np.log(err[idx_min:idx_max]),X2=q[idx_min:idx_max]**2,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
                                           ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
                                           Label1='Expt',Label2='Model',saveLabel=saveLabel)
