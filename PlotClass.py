@@ -7,6 +7,8 @@ Created on Thu Jun  4 14:47:22 2020
 """
 
 from matplotlib import pyplot as plt
+from itertools import cycle
+from Basic_SAXS_Calcs import *
 
 class PlotClass:
     
@@ -30,6 +32,7 @@ class PlotClass:
         self.axes=plt.rc('axes',linewidth=2)
         self.lines=plt.rc('lines',markeredgewidth=2)
         self.font=plt.rc('font',**{'sans-serif': ['Helvetica']})
+        self.calcs=BasicSAXS(notify=False)
         
         
     def basicPlot(self,X,Y,plotlabel='',savelabel='',xlabel='',ylabel='NOT PROVIDED'):
@@ -48,6 +51,40 @@ class PlotClass:
         plt.xlabel(xlabel,size=22)
         plt.plot(X,Y,'-',label=plotlabel,
                  color='#E55334') # best to use HTML color codes: https://htmlcolorcodes.com
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+        fig.tight_layout()
+        plt.savefig(savelabel+'.png',format='png',
+                    bbox_inches='tight',dpi=300)
+        plt.show()
+        
+    def singlePlot(self,X,Y,plotlabel='NOT PROVIDED',savelabel='NOT PROVIDED',xlabel='NOT PROVIDED',
+                   ylabel='NOT PROVIDED',color='k',linewidth=2,linestyle='-',LogLin=True,setylim=False,
+                   ymin=10**(-4),ymax=1):
+        '''
+        As simple as it gets
+        '''
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        if LogLin==True:
+            plt.semilogy(X,Y,linestyle=linestyle,
+                 linewidth=linewidth,
+                 label=plotlabel,
+                 color=color)
+        else:
+            plt.plot(X,Y,linestyle=linestyle,
+                 linewidth=linewidth,
+                 label=plotlabel,
+                 color=color) # best to use HTML color codes: https://htmlcolorcodes.com
+        if setylim==True:
+            ax1.set_ylim(ymin,ymax)
         plt.legend(numpoints=1,fontsize=18,loc='best')
         fig.tight_layout()
         plt.savefig(savelabel+'.png',format='png',
@@ -160,6 +197,54 @@ class PlotClass:
             plt.show()
 
 
+    # def kratkyPlot(self,ref_q,ref_i,plotList=[],plotListLabels=[],
+    #                 xlabel,ylabel,scaled=False,plotlabel='NoLabelProvided',
+    #                 linewidth=4):
+    #     '''
+    #     Generates a basic kratky with options to scale or not scale to the max peak.
+    #     input:
+            
+    #     ** need to deal with empty label list in a clever way
+            
+    #     output:
+    #     '''
+    #     fig=plt.figure(figsize=(10,8)) # set figure dimensions
+    #     ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+    #     for tick in ax1.xaxis.get_major_ticks():
+    #         tick.label1.set_fontsize(20) # scale for publication needs
+    #         tick.label1.set_fontname('Helvetica')
+    #     for tick in ax1.yaxis.get_major_ticks():
+    #         tick.label1.set_fontsize(20) # scale for publication needs
+    #         tick.label1.set_fontname('Helvetica')
+    #     plt.ylabel(ylabel,size=22)
+    #     plt.xlabel(xlabel,size=22)
+    #     cycol = cycle('bgrcmk') # set of colors to iterate through.
+        
+    #     if scaled==False:
+    #         if plotList=[]:
+    #             plt.plot(ref_q,ref_i,'-',label=plotlabel,
+    #                      linewidth=linewidth,color='#E55334')
+    #             # save/etc
+    #         else:
+    #             plt.plot(ref_q,ref_i,'-',label=plotlabel,
+    #                      linewidth=linewidth,color='#E55334')
+    #             for i,j in zip(plotList,plotListLabels):
+    #                 plt.plot(i[0],i[1],'-',label=j,
+    #                      linewidth=linewidth,color=next(cycol)))
+    #             # save/etc
+
+                
+    #         # proceed with normal plot
+    #     else:
+    #         plt.plot(ref_q,ref_i,'-',label=plotlabel,linewidth=linewidth,color='#E55334')
+    #         for i,j in zip(plotList,plotListLabels):
+    #             scale,offset=self.calcs.superimpose(ref_q,ref_i,0,len(ref_q),[[i[0],i[1]]],choice='Scale')
+    #             i[1]=i[1]*scale # applying scaling factor and now we can plot
+    #             plt.plot(i[0],i[1],'-',label=j,linewidth=linewidth,color=next(cycol)))
+    #             # save/etc
+    #         # apply scaling function..
+
+
     def nPlot(self,pairList,labelList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
               set_ylim=False,ylow=0.0001,yhigh=1):
@@ -213,6 +298,160 @@ class PlotClass:
                 plt.plot(i[0],i[1],
                             label=labelList[n],
                             linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        else:
+            print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+        
+    def nPlot_variColor(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            color=j,
+                            linewidth=linewidth,linestyle='dashed')
+                n+=1
+        elif LinLin==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,linestyle='dashed')
+                n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,linestyle='dashed')
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        else:
+            print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+        
+    def nPlot_variColor_and_Range(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,qmin=0,qmax=0):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+        if qmax==0:
+            n=0
+            for i in pairList:
+                qmax=len(i[0])
+                n+=1
+                if n>=1:
+                    break
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0][qmin:qmax],i[1][qmin:qmax],
+                            label=labelList[n],
+                            color=j,
+                            linewidth=linewidth,linestyle='dashed')
+                plt.minorticks_off()
+                n+=1
+        elif LinLin==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,linestyle='dashed')
+                n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,linestyle='dashed')
                 n+=1
                 ax1.set_yscale('log')
                 ax1.set_xscale('log')
@@ -319,6 +558,96 @@ class PlotClass:
         plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
         plt.show()
 
+    def nPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                            color=j,
+                             linestyle='dotted')
+                n+=1
+                plt.semilogy(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+        elif LinLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                            color=j,
+                             linestyle='dashed')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            color='k',
+                            linewidth=linewidth)
+                n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        else:
+            print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
 
     def IFT_plot(self,IFT,savelabel1='tkRubisCO_0MPa_GNOM_PDDF',savelabel2='RegularizedFit_GNOM',
                  plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',plotlabel3='Expt',plotlabel4='Regularized Fit'):
@@ -335,7 +664,8 @@ class PlotClass:
 
     def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[],ylabel1='No label provided',ylabel2='No label provided',xlabel='No label provided',
                            Label1='',
-                           Label2='',saveLabel='Vertical_Residuals',bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$'):
+                           Label2='',saveLabel='Vertical_Residuals',bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
+                           LinLin=True,linewidth=4,labelSize=20):
         '''
         X1:
         X2:
@@ -359,38 +689,51 @@ class PlotClass:
         fg = plt.figure(figsize=(15,12))
         ax = plt.subplot2grid((3,3),(0,0),rowspan=2,colspan=3)
         ax2 = plt.subplot2grid((3,3),(2,0),rowspan=1,colspan=3)
-        plt.rc("axes",linewidth=2)
+        plt.rc("axes",linewidth=linewidth)
         plt.rc('font',**{"sans-serif":["Helvetica"]})
-        ax.plot(X1,Y1,
+        if LinLin==True:
+            ax.plot(X1,Y1,
                 color='k',
                 marker='o',
-                markersize=3,
+                markersize=linewidth,
                 linestyle='None',
                 label=Label1)
-        ax.plot(X2,Y2,
+            ax.plot(X2,Y2,
                 color='#7F817F',
                 linestyle='-',
-                linewidth=3,
+                linewidth=linewidth,
                 label=Label2)
-        ax.set_ylabel(ylabel1,size=20)
+        else:
+            ax.semilogy(X1,Y1,
+                    color='k',
+                    marker='o',
+                    markersize=linewidth,
+                    linestyle='None',
+                    label=Label1)
+            ax.semilogy(X2,Y2,
+                    color='#7F817F',
+                    linestyle='-',
+                    linewidth=linewidth,
+                    label=Label2)
+        ax.set_ylabel(ylabel1,size=labelSize)
         ax.legend(numpoints=1,fontsize=18,loc="best")
         ax.xaxis.set_tick_params(which='both',width=2)
         ax.set_xticklabels([])
         ax.yaxis.set_tick_params(which='both',width=2)
         for tick in ax.yaxis.get_major_ticks():
-            tick.label1.set_fontsize(20)
+            tick.label1.set_fontsize(labelSize)
             tick.label1.set_fontname('Helvetica')
         ax2.plot(X1,((Y1 - Y2)) / ((Y1err)),
                  color='k',
                  linestyle='-',
-                 linewidth=2,
+                 linewidth=linewidth-1,
                  label=ylabel2)
         ax2.plot(X1,[0] * len(Y1),
                  color='k',
                  linestyle='--',
-                 linewidth=2)
-        ax2.set_xlabel(xlabel,size=20) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'
-        ax2.set_ylabel(bottomPlot_yLabel,size=20)
+                 linewidth=linewidth-1)
+        ax2.set_xlabel(xlabel,size=labelSize) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'
+        ax2.set_ylabel(bottomPlot_yLabel,size=labelSize)
         # $\\frac{\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}}{\sigma_{expt}}$
         # \\frac{ln(I_{expt}(q))}{ln(I_{model}(q))} \cdot \\frac{1}{\sigma_{expt}}
         ax2.legend(numpoints=1,fontsize=18,loc="best")
@@ -399,10 +742,10 @@ class PlotClass:
         ax2.xaxis.set_tick_params(which='both',width=2)
         ax2.yaxis.set_tick_params(which='both',width=2)
         for tick in ax2.xaxis.get_major_ticks():
-            tick.label1.set_fontsize(20)
+            tick.label1.set_fontsize(labelSize)
             tick.label1.set_fontname('Helvetica')
         for tick in ax2.yaxis.get_major_ticks():
-            tick.label1.set_fontsize(20)
+            tick.label1.set_fontsize(labelSize)
             tick.label1.set_fontname('Helvetica')
         ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
         fg.tight_layout()
