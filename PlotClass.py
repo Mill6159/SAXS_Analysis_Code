@@ -8,7 +8,8 @@ Created on Thu Jun  4 14:47:22 2020
 
 from matplotlib import pyplot as plt
 from itertools import cycle
-from Basic_SAXS_Calcs import *
+# from Basic_SAXS_Calcs import *
+from SAXS_Calcs import *
 
 class PlotClass:
     
@@ -32,8 +33,8 @@ class PlotClass:
         self.axes=plt.rc('axes',linewidth=2)
         self.lines=plt.rc('lines',markeredgewidth=2)
         self.font=plt.rc('font',**{'sans-serif': ['Helvetica']})
-        self.calcs=BasicSAXS(notify=False)
-        
+        self.calcs=SAXSCalcs(notify=False)
+
         
     def basicPlot(self,X,Y,plotlabel='',savelabel='',xlabel='',ylabel='NOT PROVIDED'):
         '''
@@ -197,52 +198,63 @@ class PlotClass:
             plt.show()
 
 
-    # def kratkyPlot(self,ref_q,ref_i,plotList=[],plotListLabels=[],
-    #                 xlabel,ylabel,scaled=False,plotlabel='NoLabelProvided',
-    #                 linewidth=4):
-    #     '''
-    #     Generates a basic kratky with options to scale or not scale to the max peak.
-    #     input:
+    def kratkyPlot(self,ref_q,ref_i,plotList=[],plotListLabels=[],xlabel='NoLabel',ylabel='NoLabel',scaled=False,
+                       plotlabel='NoLabelProvided',linewidth=3,savelabel='NoSaveLabelProvided_Kratky'):
+        '''
+        Generates a basic kratky with options to scale or not scale to the max peak.
+        input:
             
-    #     ** need to deal with empty label list in a clever way
+        ** need to deal with empty label list in a clever way
             
-    #     output:
-    #     '''
-    #     fig=plt.figure(figsize=(10,8)) # set figure dimensions
-    #     ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
-    #     for tick in ax1.xaxis.get_major_ticks():
-    #         tick.label1.set_fontsize(20) # scale for publication needs
-    #         tick.label1.set_fontname('Helvetica')
-    #     for tick in ax1.yaxis.get_major_ticks():
-    #         tick.label1.set_fontsize(20) # scale for publication needs
-    #         tick.label1.set_fontname('Helvetica')
-    #     plt.ylabel(ylabel,size=22)
-    #     plt.xlabel(xlabel,size=22)
-    #     cycol = cycle('bgrcmk') # set of colors to iterate through.
-        
-    #     if scaled==False:
-    #         if plotList=[]:
-    #             plt.plot(ref_q,ref_i,'-',label=plotlabel,
-    #                      linewidth=linewidth,color='#E55334')
-    #             # save/etc
-    #         else:
-    #             plt.plot(ref_q,ref_i,'-',label=plotlabel,
-    #                      linewidth=linewidth,color='#E55334')
-    #             for i,j in zip(plotList,plotListLabels):
-    #                 plt.plot(i[0],i[1],'-',label=j,
-    #                      linewidth=linewidth,color=next(cycol)))
-    #             # save/etc
+        output: goes to a max of q=0.6
+        '''
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        cycol = cycle(['#0F8985','#0E403E','#194E05','#57B036','#AA8B0B']) # set of colors to iterate through.
+        # clip at q = 0.6 for plot
+        # need to fix this for data that doesn't go to as wide of q
+        lowclip=np.where(ref_q >= 0.6)[0][0]
+        # clip at q=0.2 for determination of scaling constant
+        scaleclip=np.where(ref_q >= 0.2)[0][0]
+        if scaled==False:
+            if plotList==[]:
+                plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
+                          linewidth=linewidth,color='#E55334')
+                # save/etc
+            else:
+                plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
+                          linewidth=linewidth,color='#E55334')
+                for i,j in zip(plotList,plotListLabels):
+                    plt.plot(i[0][:lowclip],i[1][:lowclip],'-',label=j,
+                          linewidth=linewidth,color=next(cycol))
+
+                # save/etc
 
                 
-    #         # proceed with normal plot
-    #     else:
-    #         plt.plot(ref_q,ref_i,'-',label=plotlabel,linewidth=linewidth,color='#E55334')
-    #         for i,j in zip(plotList,plotListLabels):
-    #             scale,offset=self.calcs.superimpose(ref_q,ref_i,0,len(ref_q),[[i[0],i[1]]],choice='Scale')
-    #             i[1]=i[1]*scale # applying scaling factor and now we can plot
-    #             plt.plot(i[0],i[1],'-',label=j,linewidth=linewidth,color=next(cycol)))
-    #             # save/etc
-    #         # apply scaling function..
+            # proceed with normal plot
+        else:
+            plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,linewidth=linewidth,color='#E55334')
+            for i,j in zip(plotList,plotListLabels):
+                scale,offset=self.calcs.superimpose(ref_q[:scaleclip],ref_i[:scaleclip]*ref_q[:scaleclip]**2,0,
+                                                    len(ref_q[:scaleclip]),[[i[0][:scaleclip],i[1][:scaleclip]*i[0][:scaleclip]**2]],choice='Scale')
+                i[1]=i[1]*scale # applying scaling factor and now we can plot
+                plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,linewidth=linewidth,color=next(cycol),
+                         linestyle='dashed')
+                plt.legend(numpoints=1,fontsize=18,loc='best')
+                fig.tight_layout()
+                plt.savefig(savelabel + '.png',format='png',
+                            bbox_inches='tight',dpi=500)
+                # save/etc
+                plt.show()
+            # apply scaling function..
 
 
     def nPlot(self,pairList,labelList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
