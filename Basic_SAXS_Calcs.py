@@ -744,7 +744,8 @@ class BasicSAXS:
         IFT_input=str(os.getcwd()) + '/' + output_name
         IFT=self.FileParser.loadOutFile(str(IFT_input))
         Pr, R, Pr_err, Jexp, qshort, Jerr, Jreg, results, Ireg, qfull =IFT[0],IFT[1],IFT[2],IFT[3],IFT[4],IFT[5],IFT[6],IFT[7],IFT[8],IFT[9]
-
+        output_dict = {'Pr':Pr,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,'Jreg':Jreg,
+                       'results':results,'Ireg':Ireg,'qfull':qfull}
         print('GNOM reports the quality of the regularized fit to be: %s'%results['quality'])
         print('From GNOM calculated P(r) the Rg is reported as: %.2f +/- %.2f'%(results['rg'],results['rger']))
         print('From GNOM calculated P(r) the I0 is reported as: %.2f +/- %.2f' % (results['i0'],results['i0er']))
@@ -755,12 +756,14 @@ class BasicSAXS:
                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
                     xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
             self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
-                               savelabel='RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
+                               savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
         else:
             print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runGNOM() arguments.')
 
 
         print('--------------------------------------------------------------------------')
+        return output_dict
+
 
     def runDatgnom(self, file_path, save_path, outname,rg='Auto', first_pt=None, last_pt=None,plot=True,
                    lowclip=0):
@@ -884,6 +887,8 @@ class BasicSAXS:
                 iftm = None
 
             Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = iftm[0],iftm[1],iftm[2],iftm[3],iftm[4],iftm[5],iftm[6],iftm[7],iftm[8],iftm[9]
+            output_dict={'Pr':Pr,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,'Jreg':Jreg,'results':results,'Ireg':Ireg,'qfull':qfull}
+
 
             print('DATGNOM reports the quality of the regularized fit to be: %s' % results['quality'])
             print('From DATGNOM calculated P(r) the Rg is reported as: %.2f +/- %.2f' % (results['rg'],results['rger']))
@@ -904,7 +909,7 @@ class BasicSAXS:
             print('###################################################################')
             print('Given these results, you should attempt to manually refine the P(r) using the runGNOM() function available in this class.')
             print('--------------------------------------------------------------------------')
-            return iftm
+            return iftm,output_dict
 
         else:
             print('Cannot find ATSAS')

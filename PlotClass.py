@@ -131,10 +131,10 @@ class PlotClass:
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
         plt.plot(X,Y1,'-',label=plotlabel1,
-                 linewidth=linewidth+2,
-                 color='#E55334')
-        plt.plot(X,Y2,'o',label=plotlabel2,
-                 color='#1283BC')
+                 linewidth=linewidth, linestyle='dashed',
+                 color='#C922BC')
+        plt.plot(X,Y2,linestyle=(0, (1, 5)),label=plotlabel2,linewidth=linewidth,
+                 color='#616061')
         plt.legend(numpoints=1,fontsize=18,loc='best')
         fig.tight_layout()
         plt.savefig(savelabel+'.png',format='png',
@@ -158,10 +158,10 @@ class PlotClass:
             plt.ylabel(ylabel,size=22)
             plt.xlabel(xlabel,size=22)
             plt.plot(X1,Y1,'-',label=plotlabel1,
-                    linewidth=linewidth,
-                    color='#E55334')
-            plt.plot(X2,Y2,'o',label=plotlabel2,
-                    color='#1283BC')
+                    linewidth=linewidth, linestyle='dashed',
+                    color='#C922BC')
+            plt.plot(X2,Y2,marker='x',markersize=linewidth,linestyle='None',label=plotlabel2,
+                    color='#616061')
             plt.legend(numpoints=1,fontsize=18,loc='best')
             if set_ylim == True:
                 ax1.set_ylim(ylow,yhigh)
@@ -183,10 +183,10 @@ class PlotClass:
             plt.ylabel(ylabel,size=22)
             plt.xlabel(xlabel,size=22)
             plt.semilogy(X1,Y1,'-',label=plotlabel1,
-                    linewidth=linewidth,
-                    color='#E55334')
-            plt.semilogy(X2,Y2,'o',label=plotlabel2,
-                    color='#1283BC')
+                    linewidth=linewidth, linestyle='dashed',
+                    color='#C922BC')
+            plt.semilogy(X2,Y2,marker='x',markersize=linewidth,linestyle='None',label=plotlabel2,
+                    color='#616061')
             plt.legend(numpoints=1,fontsize=18,loc='best')
             if set_ylim == True:
                 ax1.set_ylim(ylow,yhigh)
