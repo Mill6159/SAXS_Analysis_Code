@@ -199,7 +199,8 @@ class PlotClass:
 
 
     def kratkyPlot(self,ref_q,ref_i,plotList=[],plotListLabels=[],xlabel='NoLabel',ylabel='NoLabel',scaled=False,
-                       plotlabel='NoLabelProvided',linewidth=3,savelabel='NoSaveLabelProvided_Kratky'):
+                       plotlabel='NoLabelProvided',linewidth=3,savelabel='NoSaveLabelProvided_Kratky',
+                   truncation_q=0.6,darkmode=False):
         '''
         Generates a basic kratky with options to scale or not scale to the max peak.
         input:
@@ -208,6 +209,15 @@ class PlotClass:
             
         output: goes to a max of q=0.6
         '''
+
+        if scaled==False:
+            initial_output='Unscaled'
+        else:
+            initial_output='Scaled'
+        print('-------> Kratky plot - %s'%initial_output)
+
+        if darkmode==True:
+            plt.style.use('dark_background')
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -218,42 +228,76 @@ class PlotClass:
             tick.label1.set_fontname('Helvetica')
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
-        cycol = cycle(['#0F8985','#0E403E','#194E05','#57B036','#AA8B0B']) # set of colors to iterate through.
-        # clip at q = 0.6 for plot
-        # need to fix this for data that doesn't go to as wide of q
-        lowclip=np.where(ref_q >= 0.6)[0][0]
+
+        cycol = cycle(['#0E403E','#194E05','#57B036','#AA8B0B','#0F8985']) # set of colors to iterate through.
+
+        # set truncation point at high-q for the plot
+        try:
+            lowclip = np.where(ref_q >= truncation_q)[0][0]
+            print('Data was truncated at q=%.2f inverse angstroms'%truncation_q)
+        except Exception:
+            lowclip=len(ref_q)-1
+            print('Data did not go out to q=0.6 inverse angstroms \nso the entire data frame was plotted')
+
         # clip at q=0.2 for determination of scaling constant
         scaleclip=np.where(ref_q >= 0.2)[0][0]
         if scaled==False:
             if plotList==[]:
                 plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
-                          linewidth=linewidth,color='#E55334')
+                          linewidth=linewidth,color='#0F8985',linestyle='dashed')
+                plt.legend(numpoints=1,fontsize=18,loc='best')
+                fig.tight_layout()
+                plt.savefig(savelabel + '.png',format='png',
+                                bbox_inches='tight',dpi=500)
+                plt.show()
+                print('No list was provided to scale to. \nTherefore, only the reference profile was plotted.')
                 # save/etc
             else:
                 plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
-                          linewidth=linewidth,color='#E55334')
+                          linewidth=linewidth,color='#0F8985',linestyle='dashed')
                 for i,j in zip(plotList,plotListLabels):
-                    plt.plot(i[0][:lowclip],i[1][:lowclip],'-',label=j,
-                          linewidth=linewidth,color=next(cycol))
+                    plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,
+                          linewidth=linewidth,color=next(cycol),
+                             linestyle='dashed')
+                plt.legend(numpoints=1,fontsize=18,loc='best')
+                fig.tight_layout()
+                plt.savefig(savelabel + '.png',format='png',
+                                bbox_inches='tight',dpi=500)
+                plt.show()
 
                 # save/etc
 
                 
-            # proceed with normal plot
+            # need to add in offset capability..
         else:
-            plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,linewidth=linewidth,color='#E55334')
-            for i,j in zip(plotList,plotListLabels):
-                scale,offset=self.calcs.superimpose(ref_q[:scaleclip],ref_i[:scaleclip]*ref_q[:scaleclip]**2,0,
-                                                    len(ref_q[:scaleclip]),[[i[0][:scaleclip],i[1][:scaleclip]*i[0][:scaleclip]**2]],choice='Scale')
-                i[1]=i[1]*scale # applying scaling factor and now we can plot
-                plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,linewidth=linewidth,color=next(cycol),
-                         linestyle='dashed')
+            if plotList==[]:
+                plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
+                          linewidth=linewidth,color='#E55334')
+                plt.legend(numpoints=1,fontsize=18,loc='best')
+                fig.tight_layout()
+                plt.savefig(savelabel + '.png',format='png',
+                                bbox_inches='tight',dpi=500)
+                plt.show()
+                print('No list was provided to scale to. \nTherefore, only the reference profile was plotted.')
+                # save/etc
+            else:
+                plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,linewidth=linewidth,color='#0F8985',linestyle='dashed')
+                for i,j in zip(plotList,plotListLabels):
+                    scale,offset=self.calcs.superimpose(ref_q[:scaleclip],ref_i[:scaleclip]*ref_q[:scaleclip]**2,0,
+                                                        len(ref_q[:scaleclip]),[[i[0][:scaleclip],i[1][:scaleclip]*i[0][:scaleclip]**2]],choice='Scale')
+                    i[1]=i[1]*scale # applying scaling factor and now we can plot
+                    plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,
+                             linewidth=linewidth,color=next(cycol),
+                             linestyle='dashed')
                 plt.legend(numpoints=1,fontsize=18,loc='best')
                 fig.tight_layout()
                 plt.savefig(savelabel + '.png',format='png',
                             bbox_inches='tight',dpi=500)
-                # save/etc
                 plt.show()
+                print('The scaled profiles were:')
+                for j in plotListLabels:
+                    print(j)
+                print('& the reference profile was %s'%plotlabel)
             # apply scaling function..
 
 
