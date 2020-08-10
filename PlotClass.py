@@ -8,6 +8,7 @@ Created on Thu Jun  4 14:47:22 2020
 
 from matplotlib import pyplot as plt
 from itertools import cycle
+import matplotlib as mpl
 # from Basic_SAXS_Calcs import *
 from SAXS_Calcs import *
 
@@ -66,6 +67,9 @@ class PlotClass:
         '''
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -101,6 +105,9 @@ class PlotClass:
         '''
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -128,6 +135,11 @@ class PlotClass:
         '''
         if darkmode==True:
             plt.style.use('dark_background')
+            c2='#22A2AA'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c2='#616061'
+
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -142,7 +154,7 @@ class PlotClass:
                  linewidth=linewidth, linestyle='dashed',
                  color='#C922BC')
         plt.plot(X,Y2,linestyle=(0, (1, 5)),label=plotlabel2,linewidth=linewidth,
-                 color='#616061')
+                 color=c2)
         plt.legend(numpoints=1,fontsize=18,loc='best')
         fig.tight_layout()
         plt.savefig(savelabel+'.png',format='png',
@@ -156,6 +168,9 @@ class PlotClass:
         '''
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
         if LogLin==False:
             fig=plt.figure(figsize=(10,8)) # set figure dimensions
             ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -228,6 +243,9 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -326,6 +344,9 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -400,6 +421,8 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -476,6 +499,8 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
 
         if qmax==0:
             n=0
@@ -561,6 +586,8 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -651,6 +678,10 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -685,7 +716,8 @@ class PlotClass:
                 n+=1
                 plt.semilogy(i[2],i[3],
                             label=labelList[n],
-                            linewidth=linewidth)
+                            linewidth=linewidth,
+                            color=c1)
                 n+=1
         elif LinLin==True:
             for i,j in zip(pairList,colorList):
@@ -697,7 +729,7 @@ class PlotClass:
                 n+=1
                 plt.plot(i[2],i[3],
                             label=labelList[n],
-                            color='k',
+                            color=c1,
                             linewidth=linewidth)
                 n+=1
         elif LogLog==True:
@@ -769,6 +801,12 @@ class PlotClass:
 
         if darkmode==True:
             plt.style.use('dark_background')
+            c1='#D2700F'
+            c2='#22A2AA'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+            c2='#7F817F'
 
         plt.rcParams['xtick.major.pad'] = 10
         plt.rcParams['ytick.major.pad'] = 10
@@ -780,25 +818,25 @@ class PlotClass:
         plt.rc('font',**{"sans-serif":["Helvetica"]})
         if LinLin==True:
             ax.plot(X1,Y1,
-                color='k',
+                color=c1,
                 marker='o',
                 markersize=linewidth,
                 linestyle='None',
                 label=Label1)
             ax.plot(X2,Y2,
-                color='#7F817F',
+                color=c2,
                 linestyle='-',
                 linewidth=linewidth,
                 label=Label2)
         else:
             ax.semilogy(X1,Y1,
-                    color='k',
+                    color=c1,
                     marker='o',
                     markersize=linewidth,
                     linestyle='None',
                     label=Label1)
             ax.semilogy(X2,Y2,
-                    color='#7F817F',
+                    color=c2,
                     linestyle='-',
                     linewidth=linewidth,
                     label=Label2)
@@ -811,12 +849,12 @@ class PlotClass:
             tick.label1.set_fontsize(labelSize)
             tick.label1.set_fontname('Helvetica')
         ax2.plot(X1,((Y1 - Y2)) / ((Y1err)),
-                 color='k',
+                 color=c1,
                  linestyle='-',
                  linewidth=linewidth-1,
                  label=ylabel2)
         ax2.plot(X1,[0] * len(Y1),
-                 color='k',
+                 color=c2,
                  linestyle='--',
                  linewidth=linewidth-1)
         ax2.set_xlabel(xlabel,size=labelSize) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'

@@ -69,6 +69,7 @@ class BasicSAXS:
 
         self.plots=PlotClass(notify=False)
         self.FileParser=FileParser(notify=False)
+        self.calcs=SAXSCalcs(notify=False)
         # self.d=typed.List.empty_list(types.float64)
         # self.l=typed.List.empty_list(types.float64)
 
@@ -194,7 +195,8 @@ class BasicSAXS:
         # outputs slope(my), intercept(by), sigma slope(smy), sigma intercept (sby)
         return my, by, smy, sby
 
-    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided', plot=True):
+    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided', plot=True,
+                     darkmode=False):
         '''
         Describe basic function here
         '''
@@ -218,7 +220,7 @@ class BasicSAXS:
         if plot==True:
             self.plots.vertical_stackPlot(X1=q[nmin:nmax] ** 2,Y1=np.log(I[nmin:nmax]),Y1err=np.log(I_Err[nmin:nmax]),X2=q[nmin:nmax]**2,Y2=model[nmin:nmax],
                                           ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
-                                          Label1='Expt',Label2='Model')
+                                          Label1='Expt',Label2='Model',darkmode=darkmode)
 
         return hbI0,hbRg,hbRg_Err,hb_qminRg,hb_qmaxRg,model
 
@@ -744,7 +746,10 @@ class BasicSAXS:
         IFT_input=str(os.getcwd()) + '/' + output_name
         IFT=self.FileParser.loadOutFile(str(IFT_input))
         Pr, R, Pr_err, Jexp, qshort, Jerr, Jreg, results, Ireg, qfull =IFT[0],IFT[1],IFT[2],IFT[3],IFT[4],IFT[5],IFT[6],IFT[7],IFT[8],IFT[9]
-        output_dict = {'Pr':Pr,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,'Jreg':Jreg,
+
+        Pr_norm=self.calcs.quickNormalize(Pr)
+
+        output_dict = {'Pr':Pr,'Pr_norm':Pr_norm,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,'Jreg':Jreg,
                        'results':results,'Ireg':Ireg,'qfull':qfull}
         print('GNOM reports the quality of the regularized fit to be: %s'%results['quality'])
         print('From GNOM calculated P(r) the Rg is reported as: %.2f +/- %.2f'%(results['rg'],results['rger']))
@@ -887,7 +892,10 @@ class BasicSAXS:
                 iftm = None
 
             Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = iftm[0],iftm[1],iftm[2],iftm[3],iftm[4],iftm[5],iftm[6],iftm[7],iftm[8],iftm[9]
-            output_dict={'Pr':Pr,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,'Jreg':Jreg,'results':results,'Ireg':Ireg,'qfull':qfull}
+            Pr_norm = self.calcs.quickNormalize(Pr)
+
+            output_dict = {'Pr':Pr,'Pr_norm':Pr_norm,'R':R,'Pr_err':Pr_err,'Jexp':Jexp,'qshort':qshort,'Jerr':Jerr,
+                           'Jreg':Jreg,'results':results,'Ireg':Ireg,'qfull':qfull}
 
 
             print('DATGNOM reports the quality of the regularized fit to be: %s' % results['quality'])

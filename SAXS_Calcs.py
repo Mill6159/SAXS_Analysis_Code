@@ -90,3 +90,19 @@ class SAXSCalcs:
                 return scale,offset
                 # each_scale.scale(scale)
                 # each_scale.offset(offset)
+
+    def quickNormalize(self,sig):
+        '''
+        This function just normalizes a signal from 0-1
+        but DOES NOT normalize by total area or with respect to a reference signal
+        '''
+        n = len(sig)
+        sig = np.absolute(sig)
+        maxY = np.nanmax(sig)
+        minY = min(sig)
+        if np.isnan(minY):
+            minY = 0
+        Ynew = np.empty(n)
+        for i in range(len(sig)):
+            Ynew[i] = (sig[i] - minY) / (maxY - minY)
+        return Ynew
