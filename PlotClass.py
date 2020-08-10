@@ -60,10 +60,12 @@ class PlotClass:
         
     def singlePlot(self,X,Y,plotlabel='NOT PROVIDED',savelabel='NOT PROVIDED',xlabel='NOT PROVIDED',
                    ylabel='NOT PROVIDED',color='k',linewidth=2,linestyle='-',LogLin=True,setylim=False,
-                   ymin=10**(-4),ymax=1):
+                   ymin=10**(-4),ymax=1,darkmode=False):
         '''
         As simple as it gets
         '''
+        if darkmode==True:
+            plt.style.use('dark_background')
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -92,10 +94,13 @@ class PlotClass:
                     bbox_inches='tight',dpi=300)
         plt.show()
         
-    def semilogyPlot(self,X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4):
+    def semilogyPlot(self,X,Y,plotlabel='',savelabel='',xlabel='',ylabel='',linewidth=4,
+                     darkmode=False):
         '''
         As simple as it gets
         '''
+        if darkmode==True:
+            plt.style.use('dark_background')
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -116,10 +121,13 @@ class PlotClass:
         plt.show()
         
         
-    def twoPlot(self,X,Y1,Y2,plotlabel1='',plotlabel2='',savelabel='',xlabel='',ylabel='',linewidth=2):
+    def twoPlot(self,X,Y1,Y2,plotlabel1='',plotlabel2='',savelabel='',xlabel='',ylabel='',linewidth=2,
+                darkmode=False):
         '''
         As simple as it gets P2
         '''
+        if darkmode==True:
+            plt.style.use('dark_background')
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -142,10 +150,12 @@ class PlotClass:
         plt.show()
 
     def twoPlot_variX(self,X1,Y1,X2,Y2,plotlabel1='',plotlabel2='',savelabel='',xlabel='',ylabel='',linewidth=2,
-                      LogLin=False,set_ylim=False,ylow=0.0001,yhigh=1):
+                      LogLin=False,set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
         '''
         As simple as it gets P2
         '''
+        if darkmode==True:
+            plt.style.use('dark_background')
         if LogLin==False:
             fig=plt.figure(figsize=(10,8)) # set figure dimensions
             ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -303,7 +313,7 @@ class PlotClass:
 
     def nPlot(self,pairList,labelList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1):
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -314,6 +324,8 @@ class PlotClass:
         :return:
         '''
 
+        if darkmode==True:
+            plt.style.use('dark_background')
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
@@ -375,7 +387,7 @@ class PlotClass:
         
     def nPlot_variColor(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1):
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -385,6 +397,9 @@ class PlotClass:
         :param linewidth:
         :return:
         '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -448,7 +463,7 @@ class PlotClass:
         
     def nPlot_variColor_and_Range(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1,qmin=0,qmax=0):
+              set_ylim=False,ylow=0.0001,yhigh=1,qmin=0,qmax=0,darkmode=False):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -458,6 +473,10 @@ class PlotClass:
         :param linewidth:
         :return:
         '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+
         if qmax==0:
             n=0
             for i in pairList:
@@ -529,7 +548,7 @@ class PlotClass:
 
     def nPlot_variX(self,pairList,labelList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1):
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -539,6 +558,9 @@ class PlotClass:
         :param linewidth:
         :return:
         '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -616,7 +638,7 @@ class PlotClass:
 
     def nPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1):
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -626,6 +648,9 @@ class PlotClass:
         :param linewidth:
         :return:
         '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
 
         fig=plt.figure(figsize=(10,8)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
@@ -706,22 +731,24 @@ class PlotClass:
 
 
     def IFT_plot(self,IFT,savelabel1='tkRubisCO_0MPa_GNOM_PDDF',savelabel2='RegularizedFit_GNOM',
-                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',plotlabel3='Expt',plotlabel4='Regularized Fit'):
+                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',plotlabel3='Expt',plotlabel4='Regularized Fit',
+                 darkmode=False):
         '''
         Plot the output of DATGNOM calculation
         '''
+
         Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = IFT[0],IFT[1],IFT[2],IFT[3],IFT[4],IFT[5],IFT[6],IFT[7], \
                                                                IFT[8],IFT[9]
         self.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=savelabel1,
                            plotlabel1=plotlabel1,plotlabel2=plotlabel2,
-                           xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+                           xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,darkmode=darkmode)
         self.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1=plotlabel3,plotlabel2=plotlabel4,
-                                 savelabel=savelabel2,xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
+                                 savelabel=savelabel2,xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True,darkmode=darkmode)
 
     def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[],ylabel1='No label provided',ylabel2='No label provided',xlabel='No label provided',
                            Label1='',
                            Label2='',saveLabel='Vertical_Residuals',bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
-                           LinLin=True,linewidth=4,labelSize=20):
+                           LinLin=True,linewidth=4,labelSize=20,darkmode=False):
         '''
         X1:
         X2:
@@ -739,6 +766,10 @@ class PlotClass:
 
         Second plot is a residual plot, therefore X2/Y2 should be the model.. Also, X1 must = x2
         '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+
         plt.rcParams['xtick.major.pad'] = 10
         plt.rcParams['ytick.major.pad'] = 10
         plt.rcParams['axes.linewidth'] = 2

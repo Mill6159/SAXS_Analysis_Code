@@ -537,7 +537,7 @@ class BasicSAXS:
 
     def runGNOM(self,file_path,output_name, gnom_nmin=50,
         rmax='Auto',force_zero_rmin=None,force_zero_rmax=None,system=0,radius56=None,alpha=None,
-        plot=True):
+        plot=True,darkmode=False):
         '''
         Need to fetch the following:
         (1) ATSAS - GNOM directory
@@ -754,9 +754,9 @@ class BasicSAXS:
         if plot==True:
             self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel=output_name+'_PDDF',
                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
-                    xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+                    xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,darkmode=darkmode)
             self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
-                               savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True)
+                               savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True,darkmode=darkmode)
         else:
             print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runGNOM() arguments.')
 
