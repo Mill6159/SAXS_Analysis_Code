@@ -328,6 +328,70 @@ class PlotClass:
                 print('& the reference profile was %s'%plotlabel)
             # apply scaling function..
 
+    def dimless_kratkyPlot(self,plotList=[],plotListLabels=[],rgList=[],I0List=[],xlabel='qR$_{g}$',ylabel='(qR$_{g}$)$^{2}$ $\cdot$ $\\frac{I(q)}{I(0)}$',
+                   linewidth=3,savelabel='NoSaveLabelProvided_dimlessKratky',
+                   truncation_q=0.6,darkmode=False):
+        '''
+        Generates a basic kratky with options to scale or not scale to the max peak.
+        input:
+
+        ** need to deal with empty label list in a clever way
+
+        output: goes to a max of q=0.6
+        '''
+
+        if darkmode == True:
+            plt.style.use('dark_background')
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+
+        fig = plt.figure(figsize=(10,8))  # set figure dimensions
+        ax1 = fig.add_subplot(1,1,1)  # allows us to build more complex plots
+        ax1.axvline(x=1.73,linestyle='dashed',color='k')
+        ax1.axhline(1.1,linestyle='dashed',color='k')
+        ax1.axhline(0.0,linestyle='-',linewidth=3,color='k')
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20)  # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20)  # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+
+        cycol = cycle(['#0F8985','#0E403E','#194E05','#57B036','#AA8B0B'])  # set of colors to iterate through.
+
+        # set truncation point at high-q for the plot
+        try:
+            n=0
+            for j in plotList:
+                lowclip = np.where(j[0] >= truncation_q)[0][0]
+                print('Data was truncated at q=%.2f inverse angstroms' % truncation_q)
+                n+=1
+                if n==1:
+                    break
+        except Exception:
+            for j in plotList:
+                lowclip = len(j[0]) - 1
+                print(lowclip)
+                print('Data did not go out to q=0.6 inverse angstroms \nso the entire data frame was plotted')
+                n+=1
+                if n==1:
+                    break
+
+        for i,j,k,z in zip(plotList,plotListLabels,rgList,I0List):
+            plt.plot((i[0][:lowclip]*k),((i[0][:lowclip]*k)**2)*(i[1][:lowclip]/z),'-',label=j,
+                     linewidth=linewidth,color=next(cycol),
+                     linestyle='dashed')
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+        fig.tight_layout()
+        plt.savefig(savelabel + '.png',format='png',
+                    bbox_inches='tight',dpi=500)
+        plt.show()
+
+                # save/etc
+
+
 
     def nPlot(self,pairList,labelList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
