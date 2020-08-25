@@ -61,5 +61,19 @@ The actual fit is also SIGMA-weighted
 
 Outputs: slope(my), intercept(by), sigma slope(smy), sigma intercept (sby)
 
+
+### _FoxS.py_ ###
+
+A script that runs FoxS calculations using a local installation of the FoxS
+profile generator 
+url: https://modbase.compbio.ucsf.edu/foxs/download.html
+
+**(1)**
+```python
+FoxS_simple(pdb1=pdb1,expt1=expt1,fast_mode=fast_mode,nq=nq,maxq=maxq, exH=exH,offset=offset,
+	plot=True)
+```
+
+
 ## I hope these are useful to more people than myself ##
 ## Best of luck ##
