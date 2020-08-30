@@ -42,6 +42,8 @@ Just like the basicPlot() function but plots the X/Y pair on a Log-linear scale.
 
 A script that actually performs the SAXS calculations (P(r), Guiner, etc) and generates the class
 BasicSAXS().
+This class has the following classes/modules/packages:
+_(1)_ ATSAS (locally installed, https://www.embl-hamburg.de/biosaxs/manuals/install.html)
 
 **(1)** 
 ```python
@@ -69,7 +71,7 @@ profile generator
 url: https://modbase.compbio.ucsf.edu/foxs/download.html
 
 This script will require the following classes/modules:  
-_(1)_ PlotClass.py (Available in this repository)  
+_(1)_ PlotClass.py (Available in this repository, but has it's own dependencies)  
 _(2)_ os  
 _(3)_ subprocess  
 _(4)_ re  
