@@ -68,6 +68,18 @@ A script that runs FoxS calculations using a local installation of the FoxS
 profile generator 
 url: https://modbase.compbio.ucsf.edu/foxs/download.html
 
+This script will require the following classes/modules:  
+_(1)_ PlotClass.py (Available in this repository)  
+_(2)_ os  
+_(3)_ subprocess  
+_(4)_ re  
+
+```zsh
+pip install os;
+pip install subprocess;
+pip install re;
+``` 
+
 **(1)**
 ```python
 FoxS_simple(pdb1=pdb1,expt1=expt1,fast_mode=fast_mode,nq=nq,maxq=maxq, exH=exH,offset=offset,
