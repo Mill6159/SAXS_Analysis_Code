@@ -8,6 +8,8 @@
 A script that builds the class FileParser(). This class reads in file types from subtracted SAXS profiles (.dat)
 to GNOM and DATGNOM output files (.out). I will describe each of the functions below:
 
+Function List:  
+
 **(1)** 
 
 ```python
@@ -21,6 +23,8 @@ for downstream use. If the .out file is not in the current working directory, th
 
 A script that builds the class PlotClass(). This class contains many functions for various different plots
 all built with matplotlib. I will describe each of the functions below:
+
+Function List:  
 
 **(1)**
 ```python
@@ -42,8 +46,11 @@ Just like the basicPlot() function but plots the X/Y pair on a Log-linear scale.
 
 A script that actually performs the SAXS calculations (P(r), Guiner, etc) and generates the class
 BasicSAXS().
-This class has the following classes/modules/packages:
-_(1)_ ATSAS (locally installed, https://www.embl-hamburg.de/biosaxs/manuals/install.html)
+This class has the following classes/modules/packages:  
+_(1)_ ATSAS (locally installed, https://www.embl-hamburg.de/biosaxs/manuals/install.html)  
+_(2)_  
+
+Function List:  
 
 **(1)** 
 ```python
@@ -81,6 +88,8 @@ pip install os;
 pip install subprocess;
 pip install re;
 ``` 
+
+Function List:  
 
 **(1)**
 ```python
