@@ -22,7 +22,7 @@ for downstream use. If the .out file is not in the current working directory, th
 ### _PlotClass.py_ ###
 
 A script that builds the class PlotClass(). This class contains many functions for various different plots
-all built with matplotlib. I will describe each of the functions below:
+all built with matplotlib. I will describe each of the functions below (Note, this class is used by many other classes within this repository):
 
 Function List:  
 
