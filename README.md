@@ -89,6 +89,35 @@ pip install subprocess;
 pip install re;
 ``` 
 
+**Sept14_2020 Update: Code no longer requires PlotClass.py. I needed it all to be self-contained and the easiest way was to package everything into a single script!**  
+*This allows us to now throw the FoxS.py script into the /usr/local/bin directory such that we can access the script from any directory at anytime! (**This is super handy!**)*  
+*Below outlines how to set this up on your local computer! Remember, you must have FoxS installed locally already and placed in the appropriate directory (should be automatic)*
+
+##### Global FoxS
+
+* Navigate to the directory containing the FoxS.py script (as of Sept14_2020)
+* Create a duplicate of the FoxS.py script named exactly (FoxS2) - **NO FILE EXTENSION**
+
+```bash
+cat FoxS.py > FoxS2
+mv FoxS2 /usr/local/bin
+```
+
+* Once you've dropped FoxS2 into /usr/local/bin you need to give it executable permissions
+
+```bash
+cd; 
+cd /usr/local/bin
+chmod u+x FoxS2
+```
+
+* Verify it worked! (Does the script run?)
+
+```bash
+cd; FoxS2
+```
+
+
 Function List:  
 
 **(1)**
