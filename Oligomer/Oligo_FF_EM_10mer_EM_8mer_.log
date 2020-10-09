@@ -1,0 +1,16 @@
+
+         ***   O L I G O M E R *** 
+================================================================================
+                                                09-Oct-2020   08:31:45
+ Option 0: a set of form-factors and several sets of experimental data 
+ Form-factor file              FF_EM_10mer_EM_8mer_.dat
+ Real oligomer weights          59139   47223
+ Oligomer radii of gyration    53.29  52.51
+ Experimental data file        tkRubisCO_StaticSAXS.dat Range of Scattering angle:    0.01    0.30
+ Using non-negativity condition 
+ Output file                   Oligo_FF_EM_10mer_EM_8mer_.fit
+ Chi^2         <MW>      <Rg>        Volume fractions +- errors
+--------------------------------------------------------------------------------
+================================================================================
+tkRubisCO_StaticSAXS  275.71     47224.      52.5      0.000+-0.000  1.000+-0.000
+================================================================================
