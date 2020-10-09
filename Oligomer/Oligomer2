@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ############################################
 # Describe script here
 # Runs ATSAS OLIGOMER software
@@ -15,7 +17,7 @@ import subprocess
 from subprocess import PIPE, Popen
 import re
 from termcolor import colored,cprint
-import numpy as np
+# import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 
