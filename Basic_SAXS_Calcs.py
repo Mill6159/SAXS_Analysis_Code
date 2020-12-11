@@ -1,3 +1,4 @@
+#!/Users/robmiller/opt/anaconda3/bin/python3
 #######################################################
 ## Describe overall goal of the code here
 #######################################################
@@ -51,9 +52,11 @@ class BasicSAXS:
             get_dammif_dir=subprocess.Popen('cd; which dammif', shell=True, stdout=subprocess.PIPE).stdout
             dammif_dir=get_dammif_dir.read()
             dammif_dir_s2=dammif_dir.decode()
+            print(dammif_dir_s2)
             dammif_dir_s3=re.sub(r'\w*dammif\w*', '', dammif_dir_s2)
             gnom_dir=dammif_dir_s3.strip()+'gnom'
             self.atsas_dir=gnom_dir # setting gnom directory finally
+            print(self.atsas_dir)
             if '/bin/' not in self.atsas_dir:
                 print('We were NOT able to locate the ATSAS-GNOM library on your local computer. Define this manually when calling the BasicSAXS() class.')
                 print('We will terminate the script...')
@@ -195,7 +198,7 @@ class BasicSAXS:
         # outputs slope(my), intercept(by), sigma slope(smy), sigma intercept (sby)
         return my, by, smy, sby
 
-    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided', plot=True,
+    def Guiner_Error(self,q,I,I_Err,nmin,nmax,file='No File Description Provided', plot=True, savelabel='Guiner_Error',
                      darkmode=False):
         '''
         Describe basic function here
@@ -218,9 +221,15 @@ class BasicSAXS:
         print('The guiner range is approximately: (qminRg, qmaxRg) - %.2f, %.2f' % (hb_qminRg,hb_qmaxRg))
 
         if plot==True:
-            self.plots.vertical_stackPlot(X1=q[nmin:nmax] ** 2,Y1=np.log(I[nmin:nmax]),Y1err=np.log(I_Err[nmin:nmax]),X2=q[nmin:nmax]**2,Y2=model[nmin:nmax],
-                                          ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
-                                          Label1='Expt',Label2='Model',darkmode=darkmode)
+            self.plots.vertical_stackPlot_Guiner(X1=q,Y1=I,Y1err=I_Err,
+                X2=q,Y2=model[nmin:nmax],idxmin=nmin,idxmax=nmax,
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
+                Label1='Expt',Label2='Model',darkmode=darkmode,saveLabel=savelabel)
+        else:
+            self.plots.vertical_stackPlot_Guiner(X1=q,Y1=I,Y1err=I_Err,
+                X2=q,Y2=model[nmin:nmax],idxmin=nmin,idxmax=nmax,
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
+                Label1='Expt',Label2='Model',darkmode=darkmode,plot=False,saveLabel=savelabel)
 
         return hbI0,hbRg,hbRg_Err,hb_qminRg,hb_qmaxRg,model
 
@@ -276,16 +285,36 @@ class BasicSAXS:
             if output_suppress is not True:
                 print('autoRg predicts the Rg to be: %.2f +/- %.2f' % (rg,rger))
                 print('with a Guiner region of (qminRg, qmaxRg): %.2f, %.2f' % (q[idx_min] * rg,q[idx_max] * rg))
+                print('nmin,nmax: ',idx_min,idx_max)
 
         slope=(-rg**2)/3
         inter=np.log(i0)
 
+        ## set up plot to show area surrounding Guiner region
+        # This is important for interpreting the quality of the fit!
+        # RM! Not done yet....
+
+        # if plot==True:
+        #     self.plots.vertical_stackPlot_Guiner(X1=q[idx_min:idx_max] ** 2,Y1=np.log(i[idx_min:idx_max]),Y1err=np.log(err[idx_min:idx_max]),
+        #         X2=q[idx_min:idx_max]**2,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
+        #         ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+        #         Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=True)
+        # else:
+        #     self.plots.vertical_stackPlot_Guiner(X1=q[idx_min:idx_max] ** 2,Y1=np.log(i[idx_min:idx_max]),Y1err=np.log(err[idx_min:idx_max]),
+        #         X2=q[idx_min:idx_max]**2,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
+        #         ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+        #         Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=False)
 
         if plot==True:
-            self.plots.vertical_stackPlot(X1=q[idx_min:idx_max] ** 2,Y1=np.log(i[idx_min:idx_max]),Y1err=np.log(err[idx_min:idx_max]),X2=q[idx_min:idx_max]**2,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),
-                                          ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
-                                          Label1='Expt',Label2='Model',saveLabel=saveLabel)
+            self.plots.vertical_stackPlot_Guiner(X1=q,Y1=i,Y1err=err,
+                X2=q,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+                Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=True)
         else:
+            self.plots.vertical_stackPlot_Guiner(X1=q,Y1=i,Y1err=err,
+                X2=q,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+                Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=False)
             if output_suppress is not True:
                 print('No plots were generated. Set plot=True to visualize the result.')
 
@@ -492,7 +521,7 @@ class BasicSAXS:
                 # all_scores[k] = scores
 
             # I have picked an aribtrary threshold here. Not sure if 0.6 is a good quality cutoff or not.
-            if quality.max() > 0.50: # RM!
+            if quality.max() > 0.52: # RM!
                 if not single_fit:
                     idx = quality.argmax()
                     rg = fit_array[:,4][quality > quality[idx] - .1].mean()
@@ -539,7 +568,7 @@ class BasicSAXS:
 
     def runGNOM(self,file_path,output_name, gnom_nmin=50,
         rmax='Auto',force_zero_rmin=None,force_zero_rmax=None,system=0,radius56=None,alpha=None,
-        plot=True,darkmode=False):
+        plot=True,darkmode=False,last_pt=None):
         '''
         Need to fetch the following:
         (1) ATSAS - GNOM directory
@@ -571,6 +600,8 @@ class BasicSAXS:
         atsas_dir=self.atsas_dir
         if atsas_dir == '':
             print('Cannot run "runGNOM" function without knowing the ATSAS directory path')
+
+        atsas_dir=atsas_dir + '/' + 'gnom'
 
 
         def concatenate_list_data(list):
@@ -610,6 +641,11 @@ class BasicSAXS:
         else:
             alpha=alpha + ' '
 
+        if last_pt==None:
+            last_pt=last_pt
+        else:
+            last_pt=str(last_pt) + ' '
+
 
         '''
         Dealing with specific exceptions
@@ -635,7 +671,7 @@ class BasicSAXS:
 
         output=str(os.getcwd()) + '/' + output_name # dump output file in current working directory.
         output=concatenate_list_data(output)
-        output=(f'"{output}"') # ensures double quotes around the outfile name which is a requirement for the GNOM input
+        output=(f'\"{output}"') # ensures double quotes around the outfile name which is a requirement for the GNOM input
         
 
         '''
@@ -647,10 +683,11 @@ class BasicSAXS:
         '--force-zero-rmin=':force_zero_rmin,
         '--force-zero-rmax=':force_zero_rmax,
         '--rmax=':rmax,
+        '--last=':last_pt,
         '--system=':system,
         '--rad56=':radius56,
         '--alpha=':alpha,
-        '--output ':output,
+        '--output ':output
         }
 
         '''
@@ -759,11 +796,16 @@ class BasicSAXS:
         if plot==True:
             self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel=output_name+'_PDDF',
                 plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
-                    xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,darkmode=darkmode)
+                    xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,darkmode=darkmode,plot=True)
             self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
-                               savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True,darkmode=darkmode)
+                               savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True,darkmode=darkmode,plot=True)
         else:
-            print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runGNOM() arguments.')
+            self.plots.twoPlot(X=R,Y1=Pr,Y2=[0]*len(Pr),savelabel=output_name+'_PDDF',
+                plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
+                xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,darkmode=darkmode,plot=False)
+            self.plots.twoPlot_variX(X1=qshort,Y1=Jexp, X2=qshort,Y2=Jreg,plotlabel1='Expt',plotlabel2='Regularized Fit',
+                savelabel=output_name+'RegularizedFit_GNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',LogLin=True,darkmode=darkmode,plot=False)
+            print('We did not plot the PDDF but dropped them in the current working directory. \nIf you want to see the PDDF, set plot=True in the runGNOM() arguments.')
 
 
         print('--------------------------------------------------------------------------')
@@ -816,6 +858,9 @@ class BasicSAXS:
             datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom'))
             shell = True
 
+
+        datgnomDir = datgnomDir + '/' + 'datgnom' # hacky fix for now..
+        # print(datgnomDir)
         '''
         Building the command to pass to DATGNOM
         And adding AutoRG capabilities! I've tried to build it to catch most errors.. 
@@ -883,13 +928,18 @@ class BasicSAXS:
             print('The final output file/filepath is:\n%s'%os.path.join(os.getcwd(),outname))
             # print(os.path.join(os.getcwd(),outname))
 
+
             if datgnom_success:
                 try:
                     iftm = self.FileParser.loadOutFile(os.path.join(save_path,outname))
                 except Exception:
+                    print('Exception raised (!!) -- Output from DATGNOM could not be found/read.')
                     iftm = None
             else:
                 iftm = None
+
+            # iftm = self.FileParser.loadOutFile(os.path.join(save_path,outname))
+            # print(iftm)
 
             Pr,R,Pr_err,Jexp,qshort,Jerr,Jreg,results,Ireg,qfull = iftm[0],iftm[1],iftm[2],iftm[3],iftm[4],iftm[5],iftm[6],iftm[7],iftm[8],iftm[9]
             Pr_norm = self.calcs.quickNormalize(Pr)
@@ -906,17 +956,24 @@ class BasicSAXS:
             if plot == True:
                 self.plots.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=outname+'_DatGNOM_PDDF',
                                    plotlabel1='Pair Distance Distribution',plotlabel2='Baseline',
-                                   xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4)
+                                   xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,plot=True)
                 self.plots.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1='Expt',
                                          plotlabel2='Regularized Fit',
                                          savelabel=outname+'RegularizedFit_DATGNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',
-                                         LogLin=True)
+                                         LogLin=True,plot=True)
             else:
-                print('We did not plot the PDDF. If you want to see the PDDF, set plot=True in the runDatgnom() arguments.')
+                self.plots.twoPlot(X=R,Y1=Pr,Y2=[0] * len(Pr),savelabel=outname+'_DatGNOM_PDDF',
+                xlabel='r($\\AA$)',ylabel='P(r)',linewidth=4,plot=False)
+                self.plots.twoPlot_variX(X1=qshort,Y1=Jexp,X2=qshort,Y2=Jreg,plotlabel1='Expt',
+                    plotlabel2='Regularized Fit',
+                    savelabel=outname+'RegularizedFit_DATGNOM',xlabel='q $\\AA^{-1}$',ylabel='I(q)',
+                    LogLin=True,plot=False)
+                print('We did not plot the PDDF but dropped them in the current working directory. \nIf you want to see the PDDF, set plot=True in the runDatgnom() arguments.')
 
             print('###################################################################')
             print('Given these results, you should attempt to manually refine the P(r) using the runGNOM() function available in this class.')
             print('--------------------------------------------------------------------------')
+            print('\n\n')
             return iftm,output_dict
 
         else:

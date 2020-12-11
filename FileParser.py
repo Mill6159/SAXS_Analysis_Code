@@ -206,3 +206,46 @@ class FileParser():
 
         return iftm
 
+
+
+    def load_datFiles(self,fileList):
+    	'''
+		Describe function here:
+
+
+    	'''
+    	c=1
+    	diction={}
+    	for i in fileList:
+    		if len(fileList)==1:
+    			break
+    		diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
+    		c+=1
+    	
+    	return diction
+
+    
+    def load_fitFiles(self,fileList):
+        '''
+        Describe function here:
+
+
+        '''
+        c=1
+        diction={}
+        for i in fileList:
+            diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','Q_mod','I(Q)_mod'), 'formats': (np.float,np.float,np.float,np.float)}, comments='#',
+                skiprows=1)
+            c+=1
+        
+        return diction
+
+
+
+
+
+# test = FileParser(notify=False)
+
+# datfiles=test.load_datFiles(fileList=('S_A_tkRubisco0mpa_1_data_000001.dat','S_A_tkRubisco10mpa_1_data_000001.dat'))
+
+# print(datfiles['data_1']['Q']) # works!

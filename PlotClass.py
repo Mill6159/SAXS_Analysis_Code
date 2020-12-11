@@ -1,5 +1,8 @@
-#!/usr/bin/env python3
+#!/Users/robmiller/opt/anaconda3/bin/python3
+'''
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+'''
 """
 Created on Thu Jun  4 14:47:22 2020
 
@@ -11,6 +14,7 @@ from itertools import cycle
 import matplotlib as mpl
 # from Basic_SAXS_Calcs import *
 from SAXS_Calcs import *
+import numpy as np
 
 class PlotClass:
     
@@ -47,11 +51,33 @@ class PlotClass:
             tick.label1.set_fontsize(20) # scale for publication needs
             tick.label1.set_fontname('Helvetica')
         for tick in ax1.yaxis.get_major_ticks():
-            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontsize(0.2) # scale for publication needs
             tick.label1.set_fontname('Helvetica')
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
         plt.plot(X,Y,'-',label=plotlabel,
+                 color='#E55334') # best to use HTML color codes: https://htmlcolorcodes.com
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+        fig.tight_layout()
+        plt.savefig(savelabel+'.png',format='png',
+                    bbox_inches='tight',dpi=300)
+        plt.show()
+
+    def basicPointPlot(self,X,Y,plotlabel='',savelabel='',xlabel='',ylabel='NOT PROVIDED'):
+        '''
+        As simple as it gets
+        '''
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.plot(X,Y,marker='o',label=plotlabel,
                  color='#E55334') # best to use HTML color codes: https://htmlcolorcodes.com
         plt.legend(numpoints=1,fontsize=18,loc='best')
         fig.tight_layout()
@@ -129,7 +155,7 @@ class PlotClass:
         
         
     def twoPlot(self,X,Y1,Y2,plotlabel1='',plotlabel2='',savelabel='',xlabel='',ylabel='',linewidth=2,
-                darkmode=False):
+                darkmode=False,plot=True):
         '''
         As simple as it gets P2
         '''
@@ -140,7 +166,7 @@ class PlotClass:
             mpl.rcParams.update(mpl.rcParamsDefault)
             c2='#616061'
 
-        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        fig=plt.figure(figsize=(8,4)) # set figure dimensions
         ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
         for tick in ax1.xaxis.get_major_ticks():
             tick.label1.set_fontsize(20) # scale for publication needs
@@ -159,10 +185,11 @@ class PlotClass:
         fig.tight_layout()
         plt.savefig(savelabel+'.png',format='png',
                     bbox_inches='tight',dpi=300)
-        plt.show()
+        if plot==True:
+            plt.show()
 
     def twoPlot_variX(self,X1,Y1,X2,Y2,plotlabel1='',plotlabel2='',savelabel='',xlabel='',ylabel='',linewidth=2,
-                      LogLin=False,set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
+                      LogLin=False,set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,plot=True):
         '''
         As simple as it gets P2
         '''
@@ -172,7 +199,7 @@ class PlotClass:
             mpl.rcParams.update(mpl.rcParamsDefault)
 
         if LogLin==False:
-            fig=plt.figure(figsize=(10,8)) # set figure dimensions
+            fig=plt.figure(figsize=(8,4)) # set figure dimensions
             ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
             for tick in ax1.xaxis.get_major_ticks():
                 tick.label1.set_fontsize(20) # scale for publication needs
@@ -197,7 +224,7 @@ class PlotClass:
                     bbox_inches='tight',dpi=300)
             plt.show()
         else:
-            fig=plt.figure(figsize=(10,8)) # set figure dimensions
+            fig=plt.figure(figsize=(8,4)) # set figure dimensions
             ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
             for tick in ax1.xaxis.get_major_ticks():
                 tick.label1.set_fontsize(20) # scale for publication needs
@@ -220,7 +247,8 @@ class PlotClass:
             fig.tight_layout()
             plt.savefig(savelabel+'.png',format='png',
                     bbox_inches='tight',dpi=300)
-            plt.show()
+            if plot==True:
+                plt.show()
 
 
     def kratkyPlot(self,ref_q,ref_i,plotList=[],plotListLabels=[],xlabel='NoLabel',ylabel='NoLabel',scaled=False,
@@ -268,11 +296,12 @@ class PlotClass:
             print('Data did not go out to q=0.6 inverse angstroms \nso the entire data frame was plotted')
 
         # clip at q=0.2 for determination of scaling constant
-        scaleclip=np.where(ref_q >= 0.2)[0][0]
+        scaleclip=np.where(ref_q >= 0.3)[0][0]
+        # scaleclip=np.where(ref_q == np.max(ref_q))[0][0]
         if scaled==False:
             if plotList==[]:
                 plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
-                          linewidth=linewidth,color='#0F8985',linestyle='dashed')
+                          linewidth=linewidth,color='#0F8985',linestyle='-')
                 plt.legend(numpoints=1,fontsize=18,loc='best')
                 fig.tight_layout()
                 plt.savefig(savelabel + '.png',format='png',
@@ -282,11 +311,11 @@ class PlotClass:
                 # save/etc
             else:
                 plt.plot(ref_q[:lowclip],ref_i[:lowclip]*ref_q[:lowclip]**2,'-',label=plotlabel,
-                          linewidth=linewidth,color='#0F8985',linestyle='dashed')
+                          linewidth=linewidth,color='#0F8985',linestyle='-')
                 for i,j in zip(plotList,plotListLabels):
                     plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,
                           linewidth=linewidth,color=next(cycol),
-                             linestyle='dashed')
+                             linestyle='-')
                 plt.legend(numpoints=1,fontsize=18,loc='best')
                 fig.tight_layout()
                 plt.savefig(savelabel + '.png',format='png',
@@ -313,7 +342,10 @@ class PlotClass:
                 for i,j in zip(plotList,plotListLabels):
                     scale,offset=self.calcs.superimpose(ref_q[:scaleclip],ref_i[:scaleclip]*ref_q[:scaleclip]**2,0,
                                                         len(ref_q[:scaleclip]),[[i[0][:scaleclip],i[1][:scaleclip]*i[0][:scaleclip]**2]],choice='Scale')
+                    # scale,offset=self.calcs.superimpose(ref_q[:scaleclip],ref_i[:scaleclip]*ref_q[:scaleclip]**2,0,
+                    #                 0.3,[[i[0][:scaleclip],i[1][:scaleclip]*i[0][:scaleclip]**2]],choice='Scale')
                     i[1]=i[1]*scale # applying scaling factor and now we can plot
+                    print('SCALE:',scale)
                     plt.plot(i[0][:lowclip],i[1][:lowclip]*i[0][:lowclip]**2,'-',label=j,
                              linewidth=linewidth,color=next(cycol),
                              linestyle='dashed')
@@ -606,10 +638,11 @@ class PlotClass:
                 plt.minorticks_off()
                 n+=1
         elif LinLin==True:
-            for i in pairList:
+            for i,j in zip(pairList, colorList):
                 plt.plot(i[0],i[1],
                             label=labelList[n],
-                            linewidth=linewidth,linestyle='dashed')
+                            linewidth=linewidth,linestyle='dashed',
+                            color=j)
                 n+=1
         elif LogLog==True:
             for i in pairList:
@@ -774,15 +807,15 @@ class PlotClass:
             for i,j in zip(pairList,colorList):
                 plt.semilogy(i[0],i[1],
                             label=labelList[n],
-                            linewidth=linewidth,
+                            linewidth=linewidth+n,
                             color=j,
-                             linestyle='dotted')
+                            linestyle='-')
                 n+=1
-                plt.semilogy(i[2],i[3],
-                            label=labelList[n],
-                            linewidth=linewidth,
-                            color=c1)
-                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
         elif LinLin==True:
             for i,j in zip(pairList,colorList):
                 plt.plot(i[0],i[1],
@@ -818,8 +851,108 @@ class PlotClass:
 
         if set_ylim==True:
             ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
+    def nPointPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
         else:
-            print('Using default y-limit range for the plot: %s'%savelabel)
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth+n,
+                            color=j,
+                            linestyle='dotted')
+                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
+        elif LinLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                            linestyle='-',
+                            color=j,
+                            marker='o',
+                            markersize=linewidth+10)
+                n+=1
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
+                # n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=18,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
         fig.tight_layout()
 
         plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
@@ -844,7 +977,7 @@ class PlotClass:
     def vertical_stackPlot(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[],ylabel1='No label provided',ylabel2='No label provided',xlabel='No label provided',
                            Label1='',
                            Label2='',saveLabel='Vertical_Residuals',bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
-                           LinLin=True,linewidth=4,labelSize=20,darkmode=False):
+                           LinLin=True,linewidth=4,labelSize=20,darkmode=False,plot=True):
         '''
         X1:
         X2:
@@ -870,11 +1003,12 @@ class PlotClass:
         else:
             mpl.rcParams.update(mpl.rcParamsDefault)
             c1='k'
-            c2='#7F817F'
+            c2='#F17800'
 
         plt.rcParams['xtick.major.pad'] = 10
         plt.rcParams['ytick.major.pad'] = 10
         plt.rcParams['axes.linewidth'] = 2
+        # plt.rcParams["figure.figsize"] = (20,10)
         fg = plt.figure(figsize=(15,12))
         ax = plt.subplot2grid((3,3),(0,0),rowspan=2,colspan=3)
         ax2 = plt.subplot2grid((3,3),(2,0),rowspan=1,colspan=3)
@@ -895,9 +1029,8 @@ class PlotClass:
         else:
             ax.semilogy(X1,Y1,
                     color=c1,
-                    marker='o',
-                    markersize=linewidth,
-                    linestyle='None',
+                    linestyle='-',
+                    linewidth=linewidth,
                     label=Label1)
             ax.semilogy(X2,Y2,
                     color=c2,
@@ -940,7 +1073,140 @@ class PlotClass:
         fg.tight_layout()
         plt.savefig(saveLabel + 'VerticalStack_plot.png',
                     format='png',dpi=500,bbox_inches='tight')
-        plt.show()
+        if plot==True:
+            plt.show()
+
+
+    def vertical_stackPlot_Guiner(self,X1=[],Y1=[],Y1err=[],X2=[],Y2=[],idxmin=0,idxmax=50,ylabel1='No label provided',ylabel2='No label provided',xlabel='No label provided',
+                           Label1='',
+                           Label2='',saveLabel='Vertical_Residuals',
+                           bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
+                           LinLin=True,linewidth=4,labelSize=20,darkmode=False,plot=True):
+        '''
+        X1: q
+        X2: q
+        Y1: Raw Data
+        Y1err:
+        Y2: Model
+        ylabel1:
+        ylabel2:
+        xlabel:
+        Label1:
+        Label2:
+        saveLabel:
+        bottomPlot_yLabel:
+
+
+        Second plot is a residual plot, therefore X2/Y2 should be the model.. Also, X1 must = x2
+        '''
+
+
+
+        Y1_org=np.log(Y1[idxmin:idxmax])
+        Y1err_org=np.log(Y1err[idxmin:idxmax])
+        # X1=X1[idxmin:idxmax]**2
+        X1_org=X2[idxmin:idxmax]**2
+        X2=X2[idxmin:idxmax]**2
+        # Y2=Y2[idxmin:idxmax]
+
+        if idxmin >= 15 and idxmax <= len(Y1)-15:
+            X1=X1[idxmin-15:idxmax+15]**2
+            Y1=np.log(Y1[idxmin-15:idxmax+15])
+            Y1err=np.log(Y1err[idxmin-15:idxmax+15])
+        elif idxmin <= 15 and idxmax <= len(Y1)-15:
+            X1=X1[0:idxmax+15]**2
+            Y1=np.log(Y1[0:idxmax+15])
+            Y1err=np.log(Y1err[0:idxmax+15])
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#D2700F'
+            c2='#22A2AA'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+            c2='#0E8987'
+
+        plt.rcParams['xtick.major.pad'] = 10
+        plt.rcParams['ytick.major.pad'] = 10
+        plt.rcParams['axes.linewidth'] = 2
+        # plt.rcParams["figure.figsize"] = (20,10)
+        fg = plt.figure(figsize=(12,8))
+        ax = plt.subplot2grid((3,3),(0,0),rowspan=2,colspan=3)
+        ax2 = plt.subplot2grid((3,3),(2,0),rowspan=1,colspan=3)
+        plt.rc("axes",linewidth=linewidth)
+        plt.rc('font',**{"sans-serif":["Helvetica"]})
+        if LinLin==True:
+            ax.plot(X1,Y1,
+                color=c1,
+                marker='o',
+                markersize=linewidth,
+                linestyle='None',
+                label=Label1)
+            ax.plot(X2,Y2,
+                color=c2,
+                linestyle='-',
+                linewidth=linewidth,
+                label=Label2)
+        else:
+            ax.semilogy(X1,Y1,
+                    color=c1,
+                    marker='o',
+                    markersize=linewidth,
+                    linestyle='None',
+                    label=Label1)
+            ax.semilogy(X2,Y2,
+                    color=c2,
+                    linestyle='-',
+                    linewidth=linewidth,
+                    label=Label2)
+
+        ax.axvline(x=X2[0],
+            linestyle='--',
+            linewidth=4,
+            color='#DA2700')
+        ax.axvline(x=X2[-1],
+            linestyle='--',
+            linewidth=4,
+            color='#DA2700')
+        ax.set_ylabel(ylabel1,size=labelSize)
+        ax.legend(numpoints=1,fontsize=18,loc="best")
+        ax.xaxis.set_tick_params(which='both',width=2)
+        ax.set_xticklabels([])
+        ax.yaxis.set_tick_params(which='both',width=2)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(labelSize)
+            tick.label1.set_fontname('Helvetica')
+        ax2.plot(X1_org,((Y1_org - Y2)) / ((Y1err_org)),
+                 color=c1,
+                 linestyle='-',
+                 linewidth=linewidth-1,
+                 label=ylabel2)
+        ax2.plot(X1_org,[0] * len(Y1_org),
+                 color=c2,
+                 linestyle='--',
+                 linewidth=linewidth-1)
+        ax2.set_xlabel(xlabel,size=labelSize) # 'q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)'
+        ax2.set_ylabel(bottomPlot_yLabel,size=labelSize)
+        # $\\frac{\\frac{ln(I_{expt}(q))}{ln(I_{model}(q))}}{\sigma_{expt}}$
+        # \\frac{ln(I_{expt}(q))}{ln(I_{model}(q))} \cdot \\frac{1}{\sigma_{expt}}
+        ax2.legend(numpoints=1,fontsize=18,loc="best")
+        # ax2.set_xlim(q[nmin],0.71)
+        # ax.set_ylim(0.01,0.025)
+        ax2.xaxis.set_tick_params(which='both',width=2)
+        ax2.yaxis.set_tick_params(which='both',width=2)
+        for tick in ax2.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(labelSize)
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax2.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(labelSize)
+            tick.label1.set_fontname('Helvetica')
+        ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
+        fg.tight_layout()
+        plt.savefig(saveLabel + 'VerticalStack_plot.png',
+                    format='png',dpi=500,bbox_inches='tight')
+        if plot==True:
+            plt.show()
 
 
 
