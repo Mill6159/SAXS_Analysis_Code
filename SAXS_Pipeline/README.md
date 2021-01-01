@@ -11,9 +11,9 @@ Requires the following classes located in the root respository:
 
 **(1)** Import .dat files  
 * Should contain three columns with any non-numeric data contained on lines starting with #  
-	Q	I(Q)	Error
+	Q	\t I(Q)		\t Error  
 
-* Place all .dat files into the sub-directory /dat_files/  
+* Place all .dat files into the sub-directory *SAXS_Pipeline/dat_files/*  
 	* The script will then read in every single file in that directory that contains the .dat suffix  
 
 
