@@ -15,6 +15,9 @@ import matplotlib as mpl
 # from Basic_SAXS_Calcs import *
 from SAXS_Calcs import *
 import numpy as np
+import itertools
+
+
 
 class PlotClass:
     
@@ -593,6 +596,8 @@ class PlotClass:
         :return:
         '''
 
+        ptypes = ('-','--')
+
         if darkmode==True:
             plt.style.use('dark_background')
         else:
@@ -638,10 +643,10 @@ class PlotClass:
                 plt.minorticks_off()
                 n+=1
         elif LinLin==True:
-            for i,j in zip(pairList, colorList):
+            for i,j,z in zip(pairList, colorList,itertools.cycle(ptypes)):
                 plt.plot(i[0],i[1],
                             label=labelList[n],
-                            linewidth=linewidth,linestyle='dashed',
+                            linewidth=linewidth,linestyle=z,
                             color=j)
                 n+=1
         elif LogLog==True:

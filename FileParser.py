@@ -2,6 +2,7 @@ import sys
 import os 
 import re
 import numpy as np  
+import SAXS_Calcs as SASM
 
 class FileParser():
 
@@ -207,6 +208,104 @@ class FileParser():
         return iftm
 
 
+    def loadIftFile(self,filename):
+    #Loads RAW BIFT .ift files into IFTM objects
+        iq_pattern = re.compile('\s*-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s*$')
+        pr_pattern = re.compile('\s*-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s*$')
+        extrap_pattern = re.compile('\s*-?\d*[.]\d*[+eE-]*\d+\s+-?\d*[.]\d*[+eE-]*\d+\s*$')
+
+        r = []
+        p = []
+        err = []
+
+        q = []
+        i = []
+        err_orig = []
+        fit = []
+
+        q_extrap = []
+        fit_extrap = []
+
+        with open(filename, 'rU') as f:
+
+            path_noext, ext = os.path.splitext(filename)
+
+            for line in f:
+
+                pr_match = pr_pattern.match(line)
+                iq_match = iq_pattern.match(line)
+                extrap_match = extrap_pattern.match(line)
+
+                if pr_match:
+                    found = pr_match.group().split()
+
+                    r.append(float(found[0]))
+                    p.append(float(found[1]))
+                    err.append(float(found[2]))
+
+                elif iq_match:
+                    found = iq_match.group().split()
+
+                    q.append(float(found[0]))
+                    i.append(float(found[1]))
+                    err_orig.append(float(found[2]))
+                    fit.append(float(found[3]))
+
+                elif extrap_match:
+                    found = extrap_match.group().split()
+
+                    q_extrap.append(float(found[0]))
+                    fit_extrap.append(float(found[1]))
+
+        p = np.array(p)
+        r = np.array(r)
+        err = np.array(err)
+        i = np.array(i)
+        q = np.array(q)
+        err_orig = np.array(err_orig)
+        fit = np.array(fit)
+        q_extrap = np.array(q_extrap)
+        fit_extrap = np.array(fit_extrap)
+
+
+        #Check to see if there is any header from RAW, and if so get that.
+        with open(filename, 'rU') as f:
+            all_lines = f.readlines()
+
+        header = []
+        for j in range(len(all_lines)):
+            if '### HEADER:' in all_lines[j]:
+                header = all_lines[j+1:]
+
+        hdict = {}
+
+        if len(header)>0:
+            hdr_str = ''
+            for each_line in header:
+                hdr_str=hdr_str+each_line.lstrip('#')
+            try:
+                hdict = dict(json.loads(hdr_str))
+            except Exception:
+                pass
+
+        parameters = hdict
+        parameters['filename'] = os.path.split(filename)[1]
+
+        if q.size == 0:
+            q = np.array([0, 0])
+            i = q
+            err_orig = q
+            fit = q
+
+        if q_extrap.size == 0:
+            q_extrap = q
+            fit_extrap = fit
+
+        iftm = SASM.IFTM(p, r, err, i, q, err_orig, fit, parameters, fit_extrap, q_extrap)
+
+        # iftm = iftm.extractAll()
+
+        return iftm.extractAll()
 
     def load_datFiles(self,fileList):
     	'''
