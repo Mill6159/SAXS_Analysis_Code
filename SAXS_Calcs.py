@@ -19,8 +19,17 @@ from numba import jitclass, types, typed
 import math
 import warnings
 import traceback
+import fabio
 # from PlotClass import *
 # from FileParser import *
+
+#######################################################
+#######################################################
+# Working notes:
+
+# Create a new class to read HDF5 files directly if a config file is given!
+# raw_settings are important!
+# deal with this next!!
 
 #######################################################
 #######################################################
@@ -396,4 +405,476 @@ def postProcessSasm(sasm, raw_settings):
         winlen = raw_settings.get('ZingerRemoveWinLen')
         start_idx = raw_settings.get('ZingerRemoveIdx')
 
-        sasm.removeZingers(start_idx, winlen, std)
+        sasm.removeZingers(start_idx, winlen, std
+
+
+
+                           )
+
+
+class SAXS_FileReader(object):
+    '''
+    Describe Class
+    '''
+
+    def __init__(self, settings = None):
+        '''
+        Describe here
+        '''
+
+        self._params = settings
+
+        if settings is None:
+            print('We need settings...')
+
+    def readSettings(filename):
+        '''
+        Describe here...
+        '''
+        try:
+            with open(filename, 'r') as f:
+                settings = f.read()
+            settings = dict(json.loads(settings))
+        except Exception as e:
+            try:
+                with open(filename, 'rb') as f:
+                    if six.PY3:
+                        pickle_obj = SASUtils.SafeUnpickler(f, encoding='latin-1')
+                    else:
+                        pickle_obj = pickle.Unpickler(f)
+                        pickle_obj.find_global = SASUtils.find_global
+                    settings = pickle_obj.load()
+            except Exception as e:
+                print('Error type: %s, error: %s' %(type(e).__name__, e))
+                return None
+
+        return settings
+
+    def checkFileType(filename):
+        ''' Tries to find out what file type it is and reports it back '''
+
+        path, ext = os.path.splitext(filename)
+
+        if ext == '.fit':
+            return 'fit'
+        elif ext == '.fir':
+            return 'fir'
+        elif ext == '.out':
+            return 'out'
+        elif ext == '.nxs': #Nexus file
+            return 'image'
+        elif ext == '.edf':
+            return 'image'
+        elif ext == '.ccdraw':
+            return 'image'
+        elif ext == '.int':
+            return 'int'
+        elif ext == '.img' or ext == '.imx_0' or ext == '.dkx_0' or ext == '.dkx_1' or ext == '.png' or ext == '.mpa':
+            return 'image'
+        elif ext == '.dat' or ext == '.sub' or ext =='.txt':
+            return 'primus'
+        elif ext == '.mar1200' or ext == '.mar2400' or ext == '.mar2300' or ext == '.mar3600':
+            return 'image'
+        elif (ext == '.img' or ext == '.sfrm' or ext == '.dm3' or ext == '.edf' or ext == '.xml' or ext == '.cbf' or ext == '.kccd' or
+            ext == '.msk' or ext == '.spr' or ext == '.tif' or ext == '.mccd' or ext == '.mar3450' or ext =='.npy' or
+            ext == '.pnm' or ext == '.No'):
+            return 'image'
+        elif ext == '.ift':
+            return 'ift'
+        elif ext == '.csv':
+            return 'csv'
+        elif ext == '.h5':
+            return 'hdf5'
+        else:
+            try:
+                fabio.open(filename)
+                return 'image'
+            except Exception:
+                try:
+                    float(ext.strip('.'))
+                except Exception:
+                    return 'rad'
+                return 'csv'
+
+    def loadFabio(filename, hdf5_file=None):
+        if hdf5_file is None:
+            fabio_img = fabio.open(filename)
+        else:
+            fabio_img = hdf5_file
+
+        if fabio_img.nframes == 1:
+            data = fabio_img.data
+            hdr = fabio_img.getheader()
+
+            img = [data]
+            img_hdr = [hdr]
+
+        else:
+            img = [None for i in range(fabio_img.nframes)]
+            img_hdr = [None for i in range(fabio_img.nframes)]
+
+            img[0] = fabio_img.data
+            img_hdr[0] = fabio_img.getheader()
+
+            for i in range(1,fabio_img.nframes):
+                fabio_img = fabio_img.next()
+                img[i] = fabio_img.data
+                img_hdr[i] = fabio_img.getheader()
+
+        fabio_img.close()
+
+        return img, img_hdr
+
+    def parseCHESSEIGER4MCountFile(filename):
+        ''' Loads information from the counter file at CHESS, id7a from
+        the image filename. EIGER .h5 files with 1-based frame numbers '''
+        dir, file = os.path.split(filename)
+        underscores = file.split('_')
+
+        countFile = underscores[0]
+
+        filenumber = int(underscores[-3])
+
+        try:
+            frame_number = int(underscores[-1].split('.')[0])
+        except Exception:
+            frame_number = 0
+
+        # REG: if user root file name contains underscores, include those
+        # note: must start at -3 to leave out "data" in image name
+
+        if len(underscores)>3:
+            for each in underscores[1:-3]:
+                countFile += '_' + each
+
+        countFilename = os.path.join(dir, countFile)
+
+        with open(countFilename,'rU') as f:
+            allLines = f.readlines()
+
+        line_num = 0
+        start_found = False
+        start_idx = None
+        label_idx = None
+        date_idx = None
+
+        for eachLine in allLines:
+            splitline = eachLine.split()
+
+            if len(splitline) > 1:
+                if splitline[0] == '#S' and splitline[1] == str(filenumber):
+                    start_found = True
+                    start_idx = line_num
+
+                if splitline[0] == '#D' and start_found:
+                    date_idx = line_num
+
+                if splitline[0] == '#L' and start_found:
+                    label_idx = line_num
+                    break
+
+            line_num = line_num + 1
+
+        counters = {}
+        try:
+            if start_idx and label_idx:
+                labels = allLines[label_idx].split()
+                # REG: hdf5 indices start at 1 not 0 as was our Pilatus convention!
+                vals = allLines[label_idx+0+frame_number].split()
+
+            for idx in range(0,len(vals)):
+                counters[labels[idx+1]] = vals[idx]
+
+            if date_idx:
+                counters['date'] = allLines[date_idx][3:-1]
+
+        except:
+            print('Error loading CHESS id7a counter file')
+
+        return counters
+
+    def loadImage(filename, raw_settings, hdf5_file=None):
+        ''' returns the loaded image based on the image filename
+        and image type. '''
+        image_type = raw_settings.get('ImageFormat')
+        fliplr = raw_settings.get('DetectorFlipLR')
+        flipud = raw_settings.get('DetectorFlipUD')
+
+        try:
+            if all_image_types[image_type] == loadFabio:
+                img, imghdr = all_image_types[image_type](filename, hdf5_file)
+            else:
+                img, imghdr = all_image_types[image_type](filename)
+        except (ValueError, TypeError, KeyError, fabio.fabioutils.NotGoodReader, Exception) as msg:
+            raise SASExceptions.WrongImageFormat('Error loading image, ' + str(msg))
+
+        if not isinstance(img, list):
+            img = [img]
+        if not isinstance(imghdr, list):
+            imghdr = [imghdr]
+
+        #Clean up headers by removing spaces in header names and non-unicode characters)
+        for hdr in imghdr:
+            if hdr is not None:
+                hdr = {key.replace(' ', '_').translate(str.maketrans('', '', '()[]'))
+                    if isinstance(key, str) else key: hdr[key] for key in hdr}
+                # hdr = { key : str(hdr[key], errors='ignore') if isinstance(hdr[key], str)
+                #     else hdr[key] for key in hdr}
+
+
+        if image_type != 'SAXSLab300':
+            for i in range(len(img)):
+                if fliplr:
+                    img[i] = np.fliplr(img[i])
+                if flipud:
+                    img[i] = np.flipud(img[i])
+        return img, imghdr
+
+#################################
+#--- ** MAIN LOADING FUNCTION **
+#################################
+
+    def loadFile(filename, raw_settings, no_processing = False):
+        ''' Loads a file an returns a SAS Measurement Object (SASM) and the full image if the
+            selected file was an Image file
+
+             NB: This is the function used to load any type of file in RAW
+        '''
+        try:
+            file_type = self.checkFileType(filename)
+            # print file_type
+        except IOError:
+            raise
+        except Exception as msg:
+            print(str(msg))
+            file_type = None
+
+        if file_type == 'hdf5':
+            try:
+                hdf5_file = fabio.open(filename)
+                file_type = 'image'
+            except Exception:
+                pass
+        else:
+            hdf5_file = None
+
+        if file_type == 'image':
+            try:
+                sasm, img = self.loadImageFile(filename, raw_settings, hdf5_file)
+            except (ValueError, AttributeError) as msg:
+                # raise SASExceptions.UnrecognizedDataFormat('No data could be retrieved from the file, unknown format.')
+                print('No data could be retrieved.. unknown format')
+
+            #Always do some post processing for image files
+            if not isinstance(sasm, list):
+                sasm = [sasm]
+
+            for current_sasm in sasm:
+                self.postProcessProfile(current_sasm, raw_settings, no_processing)
+
+        elif file_type == 'hdf5':
+            sasm = loadHdf5File(filename, raw_settings)
+            img = None
+        else:
+            print('FAILURE!!!')
+            # sasm = loadAsciiFile(filename, file_type)
+            # img = None
+
+            #If you don't want to post process asci files, return them as a list
+            if not isinstance(sasm, list):
+                SASM.postProcessSasm(sasm, raw_settings)
+
+        if not isinstance(sasm, list) and (sasm is None or len(sasm.i) == 0):
+            # raise SASExceptions.UnrecognizedDataFormat('No data could be retrieved from the file, unknown format.')
+            print('unknown format..')
+
+        return sasm, img
+
+    def postProcessSasm(sasm, raw_settings):
+        '''
+        Description..
+        '''
+        if raw_settings.get('ZingerRemoval'):
+            std = raw_settings.get('ZingerRemoveSTD')
+            winlen = raw_settings.get('ZingerRemoveWinLen')
+            start_idx = raw_settings.get('ZingerRemoveIdx')
+
+            sasm.removeZingers(start_idx, winlen, std)
+
+
+    def postProcessProfile(sasm, raw_settings, no_processing):
+        """
+        Does post-processing on profiles created from images.
+        """
+        self.postProcessSasm(sasm, raw_settings) #Does dezingering
+
+        if not no_processing:
+            #Need to do a little work before we can do glassy carbon normalization
+            if raw_settings.get('NormAbsCarbon') and not raw_settings.get('NormAbsCarbonIgnoreBkg'):
+                bkg_filename = raw_settings.get('NormAbsCarbonSamEmptyFile')
+                bkg_sasm = raw_settings.get('NormAbsCarbonSamEmptySASM')
+                if bkg_sasm is None or bkg_sasm.getParameter('filename') != os.path.split(bkg_filename)[1]:
+                    bkg_sasm, junk_img = self.loadFile(bkg_filename, raw_settings, no_processing=True)
+                    if isinstance(bkg_sasm,list):
+                        if len(bkg_sasm) > 1:
+                            bkg_sasm = SASProc.average(bkg_sasm) # RM!
+                        else:
+                            bkg_sasm = bkg_sasm[0]
+                    raw_settings.set('NormAbsCarbonSamEmptySASM', bkg_sasm)
+
+            try:
+                #Does fully glassy carbon abs scale
+                SASCalib.postProcessImageSasm(sasm, raw_settings)
+            except SASExceptions.AbsScaleNormFailed:
+                raise
+
+    def postProcessImageSasm(sasm, raw_settings):
+        if (raw_settings.get('NormAbsCarbon') and
+            not raw_settings.get('NormAbsCarbonIgnoreBkg')):
+            self.normalizeAbsoluteScaleCarbon(sasm, raw_settings)
+
+    def normalizeAbsoluteScaleCarbon(sasm, raw_settings):
+        abs_scale_constant = float(raw_settings.get('NormAbsCarbonConst'))
+        sam_thick = float(raw_settings.get('NormAbsCarbonSamThick'))
+
+        bkg_sasm = raw_settings.get('NormAbsCarbonSamEmptySASM')
+
+        ctr_ups = raw_settings.get('NormAbsCarbonUpstreamCtr')
+        ctr_dns = raw_settings.get('NormAbsCarbonDownstreamCtr')
+
+        sample_ctrs = sasm.getParameter('imageHeader')
+        sample_file_hdr = sasm.getParameter('counters')
+        sample_ctrs.update(sample_file_hdr)
+
+        bkg_ctrs = bkg_sasm.getParameter('imageHeader')
+        bkg_file_hdr = bkg_sasm.getParameter('counters')
+        bkg_ctrs.update(bkg_file_hdr)
+
+        sample_ctr_ups_val = float(sample_ctrs[ctr_ups])
+        sample_ctr_dns_val = float(sample_ctrs[ctr_dns])
+        bkg_ctr_ups_val = float(bkg_ctrs[ctr_ups])
+        bkg_ctr_dns_val = float(bkg_ctrs[ctr_dns])
+
+        sample_trans = (sample_ctr_dns_val/sample_ctr_ups_val)/(bkg_ctr_dns_val/bkg_ctr_ups_val)
+        sasm.scaleRawIntensity(1./sample_ctr_ups_val)
+        bkg_sasm.scale((1./bkg_ctr_ups_val)*sample_trans)
+
+        try:
+            sub_sasm = SASProc.subtract(sasm, bkg_sasm, forced = True, full = True)
+        except SASExceptions.DataNotCompatible:
+            sasm.scaleRawIntensity(sample_ctr_ups_val)
+            raise SASExceptions.AbsScaleNormFailed('Absolute scale failed because empty scattering could not be subtracted')
+
+        sub_sasm.scaleRawIntensity(1./(sample_trans)/sam_thick)
+        sub_sasm.scaleRawIntensity(abs_scale_constant)
+
+        sasm.setRawQ(sub_sasm.getRawQ())
+        sasm.setRawI(sub_sasm.getRawI())
+        sasm.setRawErr(sub_sasm.getRawErr())
+        sasm.scale(1.)
+        sasm.setQrange((0,len(sasm.q)))
+
+        bkg_sasm.scale(1.)
+
+        abs_scale_params = {
+            'Method'    : 'Glassy_carbon',
+            'Absolute_scale_factor': abs_scale_constant,
+            'Sample_thickness_[mm]': sam_thick,
+            'Ignore_background': False,
+            }
+
+        abs_scale_params['Background_file'] = raw_settings.get('NormAbsCarbonSamEmptyFile')
+        abs_scale_params['Upstream_counter_name'] = ctr_ups
+        abs_scale_params['Downstream_counter_name'] = ctr_dns
+        abs_scale_params['Upstream_counter_value_sample'] = sample_ctr_ups_val
+        abs_scale_params['Downstream_counter_value_sample'] = sample_ctr_dns_val
+        abs_scale_params['Upstream_counter_value_background'] = bkg_ctr_ups_val
+        abs_scale_params['Downstream_counter_value_background'] = bkg_ctr_dns_val
+        abs_scale_params['Sample_transmission'] = sample_trans
+
+        norm_parameter = sasm.getParameter('normalizations')
+
+        norm_parameter['Absolute_scale'] = abs_scale_params
+
+        sasm.setParameter('normalizations', norm_parameter)
+
+        return sasm, abs_scale_constant
+
+    def removeZingers(self, start_idx = 0, window_length = 10, stds = 4.0):
+        """
+        Removes spikes (zingers) from radially averaged data based on smoothing
+        of the intensity profile.
+
+        Parameters
+        ----------
+        start_idx: int
+            The initial index in the intensity to start the dezingering process.
+        window_length: int
+            The size of the window used to search for an replace spikes, as the
+            number of intensity points.
+        stds: The standard deviation threshold used to detect spikes.
+        """
+
+        intensity = self._i_raw
+
+        for i in range(window_length + start_idx, len(intensity)):
+
+            averaging_window = intensity[i - window_length : i]
+            averaging_window_std = np.std(averaging_window)
+            averging_window_mean = np.mean(averaging_window)
+
+            threshold = averging_window_mean + (stds * averaging_window_std)
+
+            if intensity[i] > threshold:
+                intensity[i] = averging_window_mean
+
+        print('Ran removeZingers')
+
+    def loadImageFile(filename, raw_settings, hdf5_file=None):
+        hdr_fmt = raw_settings.get('ImageHdrFormat')
+
+        loaded_data, loaded_hdr = self.loadImage(filename, raw_settings, hdf5_file)
+
+        sasm_list = [None for i in range(len(loaded_data))]
+
+        #Process all loaded images into sasms
+        for i in range(len(loaded_data)):
+            img = loaded_data[i]
+            img_hdr = loaded_hdr[i]
+
+            if len(loaded_data) > 1:
+                temp_filename = os.path.split(filename)[1].split('.')
+                if len(temp_filename) > 1:
+                    temp_filename[-2] = temp_filename[-2] + '_%05i' %(i+1)
+                else:
+                    temp_filename[0] = temp_filename[0] + '_%05i' %(i+1)
+
+                new_filename = '.'.join(temp_filename)
+            else:
+                new_filename = os.path.split(filename)[1]
+
+            hdrfile_info = self.loadHeader(filename, new_filename, hdr_fmt)
+
+            parameters = {'imageHeader' : img_hdr,
+                          'counters'    : hdrfile_info,
+                          'filename'    : new_filename,
+                          'load_path'   : filename}
+
+            sasm = self.processImage(img, parameters, raw_settings)
+
+            sasm_list[i] = sasm
+
+
+        return sasm_list, loaded_data
+
+
+
+
+
+
+
+
+
+
+
+

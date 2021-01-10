@@ -601,7 +601,7 @@ class BasicSAXS:
         if atsas_dir == '':
             print('Cannot run "runGNOM" function without knowing the ATSAS directory path')
 
-        atsas_dir=atsas_dir + '/' + 'gnom'
+        atsas_dir=atsas_dir #+ '/' + 'gnom'
 
 
         def concatenate_list_data(list):

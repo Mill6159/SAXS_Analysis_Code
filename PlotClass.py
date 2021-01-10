@@ -10,6 +10,7 @@ Created on Thu Jun  4 14:47:22 2020
 """
 
 from matplotlib import pyplot as plt
+from mpl_toolkits import mplot3d
 from itertools import cycle
 import matplotlib as mpl
 # from Basic_SAXS_Calcs import *
@@ -807,6 +808,8 @@ class PlotClass:
             print("Cannot set more than one mode equal to True")
             return
 
+        cycol = cycle(['-','dashed'])    
+
         n=0
         if LogLin==True:
             for i,j in zip(pairList,colorList):
@@ -822,17 +825,17 @@ class PlotClass:
                 #             color=c1)
                 # n+=1
         elif LinLin==True:
-            for i,j in zip(pairList,colorList):
+            for i,j,z in zip(pairList,colorList,labelList):
                 plt.plot(i[0],i[1],
-                            label=labelList[n],
+                            label=z,
                             linewidth=linewidth,
                             color=j,
-                             linestyle='dashed')
+                            linestyle=next(cycol))
                 n+=1
-                plt.plot(i[2],i[3],
-                            label=labelList[n],
-                            color=c1,
-                            linewidth=linewidth)
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
                 n+=1
         elif LogLog==True:
             for i in pairList:
@@ -1212,6 +1215,58 @@ class PlotClass:
                     format='png',dpi=500,bbox_inches='tight')
         if plot==True:
             plt.show()
+
+    def plotSAXS_Chromatogram(self, q, I, Frame,
+                              saveLabel,
+                              ylabel,
+                              xlabel,
+                              zlabel,
+                              linewidth=3,
+                              darkmode=False):
+        '''
+        Describe function here
+
+        Getting I(q) for each frame might actually be tricky... 
+        (1) Read config file
+        (2) Apply to/read H5 files
+        (3) Store them..
+        (4) Plot them
+        '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        # ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        ax1 = plt.axes(projection='3d')
+        # for tick in ax1.xaxis.get_major_ticks():
+        #     tick.label1.set_fontsize(20) # scale for publication needs
+        #     tick.label1.set_fontname('Helvetica')
+        # for tick in ax1.yaxis.get_major_ticks():
+        #     tick.label1.set_fontsize(20) # scale for publication needs
+        #     tick.label1.set_fontname('Helvetica')
+
+
+        
+        ax.plot_surface(q,I,Frame, rstride=1, cstride=1,
+            cmap='viridis', edgecolor='none')
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z');
+
+        # plt.ylabel(ylabel,size=22)
+        # plt.xlabel(xlabel,size=22)
+        # plt.legend(numpoints=1,fontsize=18,loc='best')
+
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
 
 
 
