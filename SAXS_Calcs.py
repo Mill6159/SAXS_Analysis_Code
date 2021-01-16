@@ -414,18 +414,76 @@ def postProcessSasm(sasm, raw_settings):
 
 class SAXS_FileReader(object):
     '''
-    Describe Class
+    Must pass in an object with all of the __init__ stuff ready to go!
     '''
 
-    def __init__(self, settings = None):
-        '''
-        Describe here
-        '''
+    def __init__(self, i, q, err, parameters, settings = None):
+        """
+        Constructor
 
-        self._params = settings
+        Parameters
+        ----------
+        i: numpy.array
+            The intensity vector.
+        q: numpy.array
+            The q vector.
+        err: numpy.array
+            The error vector.
+        parameters: dict
+            A dictionary of metadata for the object. This should contain at
+            least {'filename': filename_with_no_path}. Other reserved keys are:
+            'counters' : [(countername, value),...] Info from counterfiles
+            'fileHeader' : [(label, value),...] Info from the header in the
+            loaded file
+        """
 
-        if settings is None:
-            print('We need settings...')
+        #Raw intensity variables
+        self._i_raw = np.array(i)
+        self._q_raw = np.array(q)
+        self._err_raw = np.array(err)
+        self._parameters = parameters
+
+        # Make an entry for analysis parameters i.e. Rg, I(0) etc:
+        if 'analysis' not in self._parameters:
+            self._parameters['analysis'] = {}
+        if 'history' not in self._parameters:
+            self._parameters['history'] = {}
+
+        #Modified intensity variables
+        self.i = self._i_raw.copy()
+        self.q = self._q_raw.copy()
+        self.err = self._err_raw.copy()
+
+        self._scale_factor = 1
+        self._offset_value = 0
+        self._q_scale_factor = 1
+
+        #variables used for plot management
+        self.item_panel = None
+        self.plot_panel = None
+        self.line = None
+        self.err_line = None
+        self.axes = None
+        self.is_plotted = False
+        self._selected_q_range = (0, len(self._q_raw))
+
+        #Calculated values
+        try:
+            if len(self.q)>0:
+                self.total_intensity = integrate.trapz(self.getI(), self.getQ())
+                self.mean_intensity = self.getI().mean()
+            else:
+                self.total_intensity = -1
+                self.mean_intensity = -1
+
+        except Exception as e:
+            print(e)
+            self.total_intensity = -1
+            self.mean_intensity = -1
+
+    # def SafeUnpickler(pickle.Unpickler):
+    #     find_class = staticmethod(find_global)
+
 
     def readSettings(filename):
         '''
@@ -439,7 +497,7 @@ class SAXS_FileReader(object):
             try:
                 with open(filename, 'rb') as f:
                     if six.PY3:
-                        pickle_obj = SASUtils.SafeUnpickler(f, encoding='latin-1')
+                        pickle_obj = self.SafeUnpickler(f, encoding='latin-1')
                     else:
                         pickle_obj = pickle.Unpickler(f)
                         pickle_obj.find_global = SASUtils.find_global
@@ -792,13 +850,49 @@ class SAXS_FileReader(object):
         abs_scale_params['Downstream_counter_value_background'] = bkg_ctr_dns_val
         abs_scale_params['Sample_transmission'] = sample_trans
 
-        norm_parameter = sasm.getParameter('normalizations')
+        norm_parameter = self.getParameter('normalizations')
 
         norm_parameter['Absolute_scale'] = abs_scale_params
 
-        sasm.setParameter('normalizations', norm_parameter)
+        self.setParameter('normalizations', norm_parameter)
 
         return sasm, abs_scale_constant
+
+    def getParameter(self, key):
+        """
+        Gets a particular metadata parameter based on the provided key.
+
+        Parameters
+        ----------
+        key: str
+            A string that is a key in the parameters metadata dictionary.
+
+        Returns
+        -------
+        parameter
+            The parameter associated with the specified key. If the key is not
+            in the parameter dictionary, None is returned.
+        """
+
+        if key in self._parameters:
+            return self._parameters[key]
+        else:
+            return None
+            
+    def setParameter(self, key, value):
+        """
+        Sets a particular metadata parameter based on the provided key and value.
+
+        Parameters
+        ----------
+        key: str
+            The name of the new bit of metadata.
+        value: object
+            The value of the new bit of metadata. Could be anything that is
+            an acceptable value for a dictionary.
+        """
+        self._parameters[key] = value
+
 
     def removeZingers(self, start_idx = 0, window_length = 10, stds = 4.0):
         """

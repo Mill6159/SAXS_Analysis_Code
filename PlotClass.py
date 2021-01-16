@@ -815,9 +815,9 @@ class PlotClass:
             for i,j in zip(pairList,colorList):
                 plt.semilogy(i[0],i[1],
                             label=labelList[n],
-                            linewidth=linewidth+n,
+                            linewidth=linewidth,
                             color=j,
-                            linestyle='-')
+                            linestyle=next(cycol))
                 n+=1
                 # plt.semilogy(i[2],i[3],
                 #             label=labelList[n],
