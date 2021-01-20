@@ -808,7 +808,7 @@ class PlotClass:
             print("Cannot set more than one mode equal to True")
             return
 
-        cycol = cycle(['-','dashed'])    
+        cycol = cycle(['-','-','dashed'])    
 
         n=0
         if LogLin==True:

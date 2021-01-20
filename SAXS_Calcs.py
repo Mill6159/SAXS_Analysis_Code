@@ -480,9 +480,9 @@ class SAXS_FileReader(object):
             print(e)
             self.total_intensity = -1
             self.mean_intensity = -1
-
     # def SafeUnpickler(pickle.Unpickler):
     #     find_class = staticmethod(find_global)
+
 
 
     def readSettings(filename):

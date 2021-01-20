@@ -340,6 +340,17 @@ class FileParser():
 		
 		return diction
 
+	def load_fitFiles_JustCrystal(self,fileList):
+		c=1
+		diction={}
+		for i in fileList:
+			print('Reading in file: ',i)
+			diction['data_%s'%str(c)]=np.loadtxt(i,dtype={'names': ('Q', 'I(Q)'), 'formats': (np.float,np.float)},
+																					 comments='#',
+																					 skiprows=1)
+			c+=1
+
+		return diction
 
 
 
