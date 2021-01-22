@@ -22,6 +22,7 @@ import traceback
 import fabio
 # from PlotClass import *
 from FileParser import *
+from itertools import islice
 
 #######################################################
 #######################################################
@@ -128,6 +129,7 @@ class SAXSCalcs:
 
         Parser = FileParser(notify=False)
         fileList=datFileList
+        print(datFileList)
         dat_files = Parser.load_datFiles(fileList=fileList)
 
         ## Crysol Modeling
@@ -140,6 +142,7 @@ class SAXSCalcs:
 
         crysol_List=[]
         for i in fileList:
+            print('LENGTH: ', len([fileList]))
             crysol_List.append(i + '.log')
 
             
@@ -183,7 +186,7 @@ class SAXSCalcs:
             # Y2=crysol_files[str(k)]['I(Q)_mod']
             # Y1err=[1] * len(X1)
           
-            skip=next((i for i, x in enumerate(Y1) if x), None) # x!= 0 for strict match
+            # skip=next((i for i, x in enumerate(Y1) if x), None) # x!= 0 for strict match
 
             # figs.vertical_stackPlot(X1=X1[skip:],Y1=Y1[skip:],Y1err=Y1err[skip:],X2=X2[skip:],Y2=Y2[skip:],ylabel1='Intensity, I(Q)',
             #                         ylabel2='Residuals',xlabel='Q ($\mathring{A}^{-1}$)',

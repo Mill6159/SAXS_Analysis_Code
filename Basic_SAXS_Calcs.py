@@ -62,7 +62,7 @@ class BasicSAXS:
                 print('We will terminate the script...')
                 sys.exit('Analysis terminated!!!')
             else:
-                print('The GNOM library was found in the directory: %s. \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
+                print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
             print('##############################################################')
         else:
             print('#######################')
@@ -835,7 +835,7 @@ class BasicSAXS:
         print('--------------------------------------------------------------------------')
         print('###################################################################')
         print('DATGNOM P(r) calculations beginning')
-
+        print(self.atsas_dir)
 
 
         '''
@@ -851,15 +851,17 @@ class BasicSAXS:
 
         opsys = platform.system()
 
-        if opsys == 'Windows':
-            datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom.exe'))
-            shell = False
-        else:
-            datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom'))
-            shell = True
+        # if opsys == 'Windows':
+        #     datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom.exe'))
+        #     shell = False
+        # else:
+        datgnomDir = os.path.join(self.atsas_dir.replace('gnom','datgnom'))
+        shell = True
+        print(datgnomDir)
 
 
-        datgnomDir = datgnomDir + '/' + 'datgnom' # hacky fix for now..
+        # datgnomDir = datgnomDir + '/' + 'datgnom' # hacky fix for now..
+        # print(datgnomDir)
         # print(datgnomDir)
         '''
         Building the command to pass to DATGNOM

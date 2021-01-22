@@ -6,6 +6,9 @@
 # ignore png files
 *.png
 
+# ignore PDB files for now..
+*.pdb
+
 
 # python venv stuff
 venv/*
@@ -16,3 +19,18 @@ venv/*
 
 # cache stuff
 ._*
+
+# ATSAS files
+*.alm
+*.log
+*.fit
+*.pdf
+*.sav
+*.int
+*.flm
+*.abs
+*.txt
+
+# Data files (.dat)
+
+*.dat

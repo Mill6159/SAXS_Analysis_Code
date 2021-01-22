@@ -316,10 +316,12 @@ class FileParser():
 		c=1
 		diction={}
 		for i in fileList:
-			if len(fileList)==1: # RM! Some issues when fileList only contains one string entry
-				diction['data_1']=np.loadtxt(fileList, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
-			else:
-				diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
+			# if len(fileList)==1: # RM! Some issues when fileList only contains one string entry
+			# 	diction['data_1']=np.loadtxt(fileList, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
+			# else:
+			print('Loading multiple .dat files....')
+			print(i)
+			diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
 			c+=1
 		
 		return diction
