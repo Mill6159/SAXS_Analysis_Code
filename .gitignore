@@ -19,6 +19,7 @@ venv/*
 
 # cache stuff
 ._*
+*pycache*
 
 # ATSAS files
 *.alm
