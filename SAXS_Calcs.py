@@ -135,14 +135,16 @@ class SAXSCalcs:
         ## Crysol Modeling
 
         for i,j in zip(dat_files,fileList):
+            print('CRYSOL RUNNING')
             n=len(dat_files[str(i)]['ERROR']) # scale the size of the profile for downstream residuals calculations
             cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(j),str(qmax),str(j))
+            print(cmd)
             proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
             (out, err) = proc.communicate()
+            print(out)
 
         crysol_List=[]
         for i in fileList:
-            print('LENGTH: ', len([fileList]))
             crysol_List.append(i + '.log')
 
             
