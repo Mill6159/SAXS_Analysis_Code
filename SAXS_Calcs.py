@@ -15,7 +15,8 @@ import csv
 import subprocess
 import platform
 from numba import jit
-from numba import jitclass, types, typed
+from numba import types, typed
+from numba.experimental import jitclass
 import math
 import warnings
 import traceback
@@ -127,21 +128,43 @@ class SAXSCalcs:
 
         # Import data files
 
-        Parser = FileParser(notify=False)
+        
+        def load_datFiles(fileList):
+            '''
+            Describe function here:
+
+
+            '''
+            c=1
+            diction={}
+            for i in fileList:
+              # if len(fileList)==1: # RM! Some issues when fileList only contains one string entry
+              #   diction['data_1']=np.loadtxt(fileList, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
+              # else:
+              # print('Loading multiple .dat files....')
+              # print(i)
+              diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#',
+                                                   skiprows=1)
+              c+=1
+            
+            return diction
+
         fileList=datFileList
-        print(datFileList)
-        dat_files = Parser.load_datFiles(fileList=fileList)
+        dat_files = load_datFiles(fileList=fileList)
 
         ## Crysol Modeling
 
         for i,j in zip(dat_files,fileList):
-            print('CRYSOL RUNNING')
+            print('Starting Crysol Run')
+            print('')
             n=len(dat_files[str(i)]['ERROR']) # scale the size of the profile for downstream residuals calculations
             cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(j),str(qmax),str(j))
+            print('Final command line input')
             print(cmd)
+            print('')
             proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
             (out, err) = proc.communicate()
-            print(out)
+            # print(out)
 
         crysol_List=[]
         for i in fileList:
@@ -152,7 +175,24 @@ class SAXSCalcs:
         for k in fileList:
             crysol_fits.append(k+'.fit')
 
-        crysol_files = Parser.load_fitFiles(fileList=crysol_fits)
+        def load_fitFiles(fileList):
+          '''
+          Describe function here:
+
+
+          '''
+          c=1
+          diction={}
+          for i in fileList:
+            diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','Q_mod','I(Q)_mod'), 'formats': (np.float,np.float,np.float,np.float)}, comments='#',
+              skiprows=1)
+            c+=1
+    
+          return diction
+
+        crysol_files = load_fitFiles(fileList=crysol_fits)
+
+        export_dictionary={}
             
         for fn,k,z in zip(crysol_List,crysol_files,fileList):
             crysol_parse=[]
@@ -166,17 +206,20 @@ class SAXSCalcs:
                     if 'Chi^2' in line:
                         crysol_parse.append(''.join(islice(f, 1)))
                     if 'Rg from the slope of net intensity' in line:
-                        print(line)
+                        # print(line)
                         crysol_parse2.append(line)
             
             Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
             print('Final Rg (A): ', Rg)
             chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
             print('Chi-Squared: ',chi_sq)
+            print('')
 
             Q = crysol_files[str(k)]['Q']
             expt_IQ = crysol_files[str(k)]['I(Q)']
             model_IQ = crysol_files[str(k)]['I(Q)_mod']
+
+            export_dictionary['%s'%str(z)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
 
             # pairList=[[crysol_files[str(k)]['Q'],crysol_files[str(k)]['I(Q)']],
             #           [crysol_files[str(k)]['Q'],crysol_files[str(k)]['I(Q)_mod']]]
@@ -197,8 +240,98 @@ class SAXSCalcs:
             #                         LinLin=False,
             #                         linewidth=4,labelSize=20,darkmode=False,plot=True)
 
-        return Q, expt_IQ, model_IQ
+        return export_dictionary
 
+
+    def runCrysol_single(self, datFile,
+                         filename,
+                         PDB_File,
+                         qmax=0.3):
+        '''
+        Description
+        '''
+
+        # Import data files
+
+        dat_files = datFile
+        fileList = filename
+
+        ## Crysol Modeling
+
+        print('CRYSOL RUNNING')
+        n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
+        cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(filename))
+        print(cmd)
+        proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+        print(out)
+
+        crysol_List=[]
+        crysol_List.append(filename + '.log')
+
+        print(crysol_List)
+
+            
+        crysol_fits = []
+        crysol_fits.append(filename + '.fit')
+
+
+        def load_fitFiles(file):
+          '''
+          Just loads in the intensity file generated by crysol.
+          '''
+          c=1
+          diction={}
+          diction['data_%s'%str(c)]=np.loadtxt(file, dtype={'names': ('Q', 'I(Q)','Q_mod','I(Q)_mod'), 
+                                               'formats': (np.float,np.float,np.float,np.float)}, comments='#',
+                                               skiprows=1)
+          return diction
+
+        # crysol_files = load_fitFiles(file=crysol_fits)
+            
+        # crysol_parse=[]
+        # crysol_parse2=[]
+        # with open(crysol_List, "r") as f: # important to use with command when dealing with files
+        #     counter = 0
+        #     print('File: %s' %str(filename))
+        #     c=0
+        #     for line in f:
+        #         c+=1
+        #         if 'Chi^2' in line:
+        #             crysol_parse.append(''.join(islice(f, 1)))
+        #         if 'Rg from the slope of net intensity' in line:
+        #             print(line)
+        #             crysol_parse2.append(line)
+        
+        # Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
+        # print('Final Rg (A): ', Rg)
+        # chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
+        # print('Chi-Squared: ',chi_sq)
+
+        # Q = crysol_files[str(crysol_files)]['Q']
+        # expt_IQ = crysol_files[str(crysol_files)]['I(Q)']
+        # model_IQ = crysol_files[str(crysol_files)]['I(Q)_mod']
+
+        # pairList=[[crysol_files[str(crysol_files)]['Q'],crysol_files[str(crysol_files)]['I(Q)']],
+        #           [crysol_files[str(crysol_files)]['Q'],crysol_files[str(crysol_files)]['I(Q)_mod']]]
+        # labelList=['%s'%str(filename),'Model']
+        # colorList=['#9B9B9B','#00B2AF']
+        # X1=crysol_files[str(crysol_files)]['Q']
+        # Y1=crysol_files[str(crysol_files)]['I(Q)']
+        # X2=crysol_files[str(crysol_files)]['Q']
+        # Y2=crysol_files[str(crysol_files)]['I(Q)_mod']
+        # Y1err=[1] * len(X1)
+      
+        # skip=next((i for i, x in enumerate(Y1) if x), None) # x!= 0 for strict match
+
+        # figs.vertical_stackPlot(X1=X1[skip:],Y1=Y1[skip:],Y1err=Y1err[skip:],X2=X2[skip:],Y2=Y2[skip:],ylabel1='Intensity, I(Q)',
+        #                         ylabel2='Residuals',xlabel='Q ($\mathring{A}^{-1}$)',
+        #                         Label1='%s'%filename, Label2='Crysol Model',saveLabel='%s_Crysol_fit_EM10mer'%str(filename),
+        #                         bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
+        #                         LinLin=False,
+        #                         linewidth=4,labelSize=20,darkmode=False,plot=True)
+
+        return Q, expt_IQ, model_IQ
 
 class IFTM(object):
     """

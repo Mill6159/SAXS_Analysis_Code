@@ -808,7 +808,7 @@ class PlotClass:
             print("Cannot set more than one mode equal to True")
             return
 
-        cycol = cycle(['-','-','dashed'])    
+        cycol = cycle(['-','-','-'])    
 
         n=0
         if LogLin==True:
@@ -854,7 +854,7 @@ class PlotClass:
 
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
-        plt.legend(numpoints=1,fontsize=18,loc='best')
+        plt.legend(numpoints=1,fontsize=14,loc='best')
 
 
         if set_ylim==True:
@@ -924,14 +924,19 @@ class PlotClass:
                 # n+=1
         elif LinLin==True:
             for i,j in zip(pairList,colorList):
-                plt.plot(i[0],i[1],
-                            label=labelList[n],
-                            linewidth=linewidth,
-                            linestyle='-',
-                            color=j,
-                            marker='o',
-                            markersize=linewidth+10)
-                n+=1
+              plt.plot(i[0],i[1],
+              label=labelList[n],
+              linewidth=linewidth,
+              linestyle='-',
+              color=j)
+                # plt.plot(i[0],i[1],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             linestyle='-',
+                #             color=j,
+                #             marker='o',
+                #             markersize=linewidth+10)
+              n+=1
                 # plt.plot(i[2],i[3],
                 #             label=labelList[n],
                 #             color=c1,
@@ -1267,6 +1272,100 @@ class PlotClass:
 
         plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
         plt.show()
+
+    def dual_yAxis(self,
+                   pairList,
+                   colorList,
+                   labelList,
+                   set_ylim1=False,
+                   set_ylim2=False,
+                   xlabel='X_Label',
+                   ylabel1='Y_Label_#1',
+                   ylabel2='Y_Label_#2',
+                   linewidth=3,
+                   savelabel='dual_yAxis'):
+        '''
+        doc string
+
+
+        '''
+
+        fig=plt.figure(figsize=(10,8)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        cycol_color = cycle(['#0E403E','#194E05','#57B036','#AA8B0B','#0F8985'])
+        cycol_linestyle = cycle(['solid','dotted','dashed','dashdot','dashdotdotted'])
+        cycol_markerstyle = cycle(['o','P','X','^','s'])
+
+        lns = {}
+        c=0
+        n=0
+        for i,j,z in zip(pairList,colorList,labelList):
+            lns['%s'%str(n)]=ax1.plot(i[0],i[1],
+                        label=z,
+                        linewidth=linewidth,
+                        linestyle='-',
+                        color=colorList[c])
+            n+=1
+            c+=1
+        
+        ax1.set_ylabel(ylabel1,size=22)
+        ax1.set_xlabel(xlabel,size=22)
+
+        ax2=ax1.twinx()
+
+        for tick in ax2.xaxis.get_major_ticks():
+            tick.label2.set_fontsize(20) # scale for publication needs
+            tick.label2.set_fontname('Helvetica')
+        for tick in ax2.yaxis.get_major_ticks():
+            tick.label2.set_fontsize(20) # scale for publication needs
+            tick.label2.set_fontname('Helvetica')
+
+
+        for i,j,z in zip(pairList,colorList,labelList):
+            lns['%s'%str(n)]=ax2.plot(i[0],i[2],
+                        label=z,
+                        linestyle='None',
+                        markersize=linewidth,
+                        marker=next(cycol_markerstyle),
+                        color=colorList[c])
+            n+=1
+            c+=1
+
+        ax2.set_ylabel(ylabel2,size=22)
+
+        all_lns = []
+        all_labs = []
+        for key,value in lns.items():
+          all_labs.append(value[0].get_label())
+          all_lns.append(value[0])
+        ax1.legend(all_lns, all_labs, loc=0, fontsize = 18)
+
+
+        # if set_ylim==True:
+        #     ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
+
+
+
+
+
+
+
+
+
 
 
 

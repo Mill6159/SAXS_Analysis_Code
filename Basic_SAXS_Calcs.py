@@ -2,7 +2,7 @@
 #######################################################
 ## Describe overall goal of the code here
 #######################################################
-
+# The code does..
 
 #######################################################
 # Imports
@@ -15,7 +15,8 @@ import csv
 import subprocess
 import platform
 from numba import jit
-from numba import jitclass, types, typed
+from numba import types, typed
+from numba.experimental import jitclass
 import math
 import warnings
 import traceback
