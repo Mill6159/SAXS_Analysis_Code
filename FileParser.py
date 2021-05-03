@@ -354,13 +354,15 @@ class FileParser():
 
 		return diction
 
-  def load_datFilesFull(self,fileList):
-    c=1
-    diction={}
-    for i in fileList:
-      diction[str(i)] = np.loadtxt(i, dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (np.float, np.float, np.float)},
-                                   comments = '#')
-    return diction
+	def load_datFilesFull(self,fileList):
+		c=1
+		diction={}
+		for i in fileList:
+			x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
+
+			diction[str(x)] = np.loadtxt(i, dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (np.float, np.float, np.float)},
+																	 comments = '#')
+		return diction
 
 
 

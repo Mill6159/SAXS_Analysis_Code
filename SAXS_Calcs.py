@@ -119,6 +119,22 @@ class SAXSCalcs:
             Ynew[i] = (sig[i] - minY) / (maxY - minY)
         return Ynew
 
+    def load_fitFiles(self,fileList):
+      '''
+      Describe function here:
+
+
+      '''
+      c=1
+      diction={}
+      for i in fileList:
+        diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)','Q_mod','I(Q)_mod'), 'formats': (np.float,np.float,np.float,np.float)}, comments='#',
+          skiprows=1)
+        c+=1
+
+      return diction
+
+
     def runCrysol(self, datFileList,
                   PDB_File,
                   qmax=0.3):
@@ -243,7 +259,7 @@ class SAXSCalcs:
         return export_dictionary
 
 
-    def runCrysol_single(self, datFile,
+    def runCrysol_single(self,
                          filename,
                          PDB_File,
                          qmax=0.3):
@@ -251,29 +267,82 @@ class SAXSCalcs:
         Description
         '''
 
+        cwd = str(os.getcwd())
+        crysol_dir = '/Crysol_Modeling' # create folder for modeling files
+        save_dir = cwd + crysol_dir
+
+        if not os.path.exists(save_dir):
+          os.mkdir(save_dir) # create it if it doesn't already exist
+
+        os.chdir(save_dir) # switch to that directory
+
+        print(save_dir)
+
         # Import data files
 
-        dat_files = datFile
         fileList = filename
+
+        test = os.path.basename(fileList)
+        print(test)
+
+        output_name = cwd + crysol_dir + '/fileList'
 
         ## Crysol Modeling
 
         print('CRYSOL RUNNING')
-        n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
-        cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(filename))
+        # n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
+        cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(output_name))
         print(cmd)
         proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
-        print(out)
+        # print(out)
 
         crysol_List=[]
-        crysol_List.append(filename + '.log')
+        crysol_List.append(output_name + '.log')
 
         print(crysol_List)
 
             
         crysol_fits = []
-        crysol_fits.append(filename + '.fit')
+        crysol_fits.append(output_name + '.fit')
+
+        print(crysol_fits)
+
+        ##### Fancier parsing..
+
+
+        crysol_files = self.load_fitFiles(fileList=crysol_fits)
+
+        export_dictionary={}
+            
+        for fn,k,z in zip(crysol_List,crysol_files,fileList):
+            crysol_parse=[]
+            crysol_parse2=[]
+            with open(fn, "r") as f: # important to use with command when dealing with files
+                counter = 0
+                print('File: %s' %str(z))
+                c=0
+                for line in f:
+                    c+=1
+                    if 'Chi^2' in line:
+                        crysol_parse.append(''.join(islice(f, 1)))
+                    if 'Rg from the slope of net intensity' in line:
+                        # print(line)
+                        crysol_parse2.append(line)
+            
+            Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
+            print('Final Rg (A): ', Rg)
+            chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
+            print('Chi-Squared: ',chi_sq)
+            print('')
+
+            Q = crysol_files[str(k)]['Q']
+            expt_IQ = crysol_files[str(k)]['I(Q)']
+            model_IQ = crysol_files[str(k)]['I(Q)_mod']
+
+            export_dictionary['%s'%str(z)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
+
+        return export_dictionary
 
 
         def load_fitFiles(file):
