@@ -17,7 +17,7 @@ import matplotlib as mpl
 from SAXS_Calcs import *
 import numpy as np
 import itertools
-
+from matplotlib.legend_handler import HandlerLine2D, HandlerTuple
 
 
 class PlotClass:
@@ -768,7 +768,8 @@ class PlotClass:
 
     def nPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
               LogLin=True,LinLin=False,LogLog=False,linewidth=3,
-              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False):
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
+              lg_size=14):
         '''
         :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
         :param labelList: list of length n, labeling the sets of tuples in pairList
@@ -854,7 +855,7 @@ class PlotClass:
 
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
-        plt.legend(numpoints=1,fontsize=14,loc='best')
+        plt.legend(numpoints=1,fontsize=lg_size,loc='best')
 
 
         if set_ylim==True:
@@ -913,9 +914,11 @@ class PlotClass:
             for i,j in zip(pairList,colorList):
                 plt.semilogy(i[0],i[1],
                             label=labelList[n],
-                            linewidth=linewidth+n,
-                            color=j,
-                            linestyle='dotted')
+                            linestyle=None,
+                            linewidth=linewidth,
+                            marker = 'o',
+                            markersize = linewidth + 5,
+                            color=j)
                 n+=1
                 # plt.semilogy(i[2],i[3],
                 #             label=labelList[n],
@@ -926,8 +929,10 @@ class PlotClass:
             for i,j in zip(pairList,colorList):
               plt.plot(i[0],i[1],
               label=labelList[n],
+              linestyle=None,
               linewidth=linewidth,
-              linestyle='-',
+              marker = 'o',
+              markersize = linewidth + 5,
               color=j)
                 # plt.plot(i[0],i[1],
                 #             label=labelList[n],
@@ -1283,7 +1288,9 @@ class PlotClass:
                    ylabel1='Y_Label_#1',
                    ylabel2='Y_Label_#2',
                    linewidth=3,
-                   savelabel='dual_yAxis'):
+                   savelabel='dual_yAxis',
+                   markerLabel=None,
+                   legend=None):
         '''
         doc string
 
@@ -1327,16 +1334,26 @@ class PlotClass:
             tick.label2.set_fontsize(20) # scale for publication needs
             tick.label2.set_fontname('Helvetica')
 
-
-        for i,j,z in zip(pairList,colorList,labelList):
+        if markerLabel == None:
+          for i,j,z in zip(pairList,colorList,labelList):
             lns['%s'%str(n)]=ax2.plot(i[0],i[2],
-                        label=z,
+                        label='',
                         linestyle='None',
                         markersize=linewidth,
                         marker=next(cycol_markerstyle),
                         color=colorList[c])
             n+=1
             c+=1
+        else:
+          for i,j,z in zip(pairList,colorList,labelList):
+              lns['%s'%str(n)]=ax2.plot(i[0],i[2],
+                          label=z,
+                          linestyle='None',
+                          markersize=linewidth,
+                          marker=next(cycol_markerstyle),
+                          color=colorList[c])
+              n+=1
+              c+=1
 
         ax2.set_ylabel(ylabel2,size=22)
 
@@ -1345,8 +1362,12 @@ class PlotClass:
         for key,value in lns.items():
           all_labs.append(value[0].get_label())
           all_lns.append(value[0])
-        ax1.legend(all_lns, all_labs, loc=0, fontsize = 18)
 
+        if legend == None:
+          ax1.legend(all_lns, all_labs, loc=0, fontsize = 18)
+        else:
+          ax1.legend([(all_lns)], [all_labs], numpoints=2,
+               handler_map={tuple: HandlerTuple(ndivide=None)})
 
         # if set_ylim==True:
         #     ax1.set_ylim(ylow,yhigh)
