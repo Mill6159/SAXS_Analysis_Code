@@ -17,6 +17,10 @@ import platform
 from numba import jit
 from numba import types, typed
 from numba.experimental import jitclass
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
+from itertools import cycle
+import matplotlib as mpl
 import math
 import warnings
 import traceback
@@ -24,7 +28,7 @@ import fabio
 # from PlotClass import *
 from FileParser import *
 from itertools import islice
-
+import scipy.linalg as sp
 #######################################################
 #######################################################
 # Working notes:
@@ -47,6 +51,222 @@ class SAXSCalcs:
             print('--------------------------------------------------------------')
 
         # other stuff.. atsas?
+
+    def nPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
+              lg_size=8):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',markeredgewidth=2)
+        plt.rc('font',**{'sans-serif': ['Helvetica']})
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(8,6.5)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        cycol = cycle(['-','-','-'])    
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                            color=j,
+                            linestyle=next(cycol))
+                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
+        elif LinLin==True:
+            for i,j,z in zip(pairList,colorList,labelList):
+                plt.plot(i[0],i[1],
+                            label=z,
+                            linewidth=linewidth,
+                            color=j,
+                            linestyle=next(cycol))
+                n+=1
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
+                n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=lg_size,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
+    def nPointPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
+              lg_size=8):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',markeredgewidth=2)
+        plt.rc('font',**{'sans-serif': ['Helvetica']})
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(8,6.5)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(20) # scale for publication needs
+            tick.label1.set_fontname('Helvetica')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linestyle=None,
+                            linewidth=linewidth,
+                            marker = 'o',
+                            markersize = linewidth + 5,
+                            color=j)
+                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
+        elif LinLin==True:
+            for i,j in zip(pairList,colorList):
+              plt.plot(i[0],i[1],
+              label=labelList[n],
+              linestyle=None,
+              linewidth=linewidth,
+              marker = 'o',
+              markersize = linewidth + 5,
+              color=j)
+                # plt.plot(i[0],i[1],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             linestyle='-',
+                #             color=j,
+                #             marker='o',
+                #             markersize=linewidth+10)
+              n+=1
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
+                # n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=22)
+        plt.xlabel(xlabel,size=22)
+        plt.legend(numpoints=1,fontsize=lg_size,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
 
     def superimpose(self,ref_q,ref_i,qmin,qmax,scale_list,choice='Scale'):
         """
@@ -118,6 +338,243 @@ class SAXSCalcs:
         for i in range(len(sig)):
             Ynew[i] = (sig[i] - minY) / (maxY - minY)
         return Ynew
+
+    def SVD(self,
+        file_path,
+        fileList,
+        nmin=0,
+        qmax=None,
+        SVs=3,
+        plot=True,
+        savelabel='SVD',
+        error_mode='average'):
+        '''
+        Doc string
+        
+        Must assemble I(q) values into an array
+        [I1(q),I2(q),....,In(q)] where each I is a column vector
+        
+        Must truncate high q for sure
+
+        Returns:
+        Left singular vector: U
+        Singular values: s
+        Right singular vectors: Vh
+        A plot of each of plot = True
+        '''
+
+        # Set up file path and inputs
+
+
+        def load_datFilesFull(fileList):
+          c=1
+          diction={}
+          for i in fileList:
+            x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
+
+            diction[str(x)] = np.loadtxt(i, 
+              dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 
+              'formats': (float, float, float)},
+              comments = '#')
+          return diction
+
+        if fileList == 'None':
+          fileList_clean = []
+          for j in os.listdir(file_path): # ensures we are only grabbing .dat file
+            if j.endswith(".dat"):
+              fileList_clean.append(j)
+        else:
+          fileList_clean = fileList
+
+        fileList_clean = list(fileList_clean)
+
+        datFileList = []
+        for j in fileList_clean:
+            datFileList.append(file_path + j)
+
+        # Extract directory name for figure SaveLabels
+
+        # directory = re.sub(".*/", "", file_path)
+        # print(directory)
+
+        # m = re.match(r'([a-z/._]+)([a-zA-Z1-9]_)',file_path)
+        # print (m.group(1))
+
+        # Load in data
+
+        data = load_datFilesFull(fileList=datFileList)
+
+        # Print messages
+        pn=60
+        print('#'*pn)
+        print('--> Running SVD')
+        print('#'*pn)
+
+        ## Singular values input
+        print('It has been assumed there are %s significant singular values.\nSome output plots will reflect this.'%str(SVs))
+        print('#'*pn)
+        ## Final message
+        print('\n')
+        #
+
+
+        dim1 = len(datFileList) # first dimension of the array - i.e. how many input files
+
+        # Set data limits
+
+        c=0
+        for j in fileList_clean: # iterate through the list and the nmax that corresponds to qmax
+          if qmax is not None:
+            x = np.where(data[str(j)]['Q'] > qmax)
+            nhigh = x[0][0]
+          c+=1
+          if c >= 1:
+            break
+          else:
+            minList = []
+            for i in fileList_clean:
+              minList.append(len(data[str(i)]['I(Q)']))
+              nhigh = np.min(minList)
+
+        nlow = int(nmin)
+
+        ## Build SVD list
+
+        svd_List = []
+        for j in fileList_clean:
+          I = np.nan_to_num(x=data[str(j)]['I(Q)'][nlow:nhigh], nan=0) # remove nan
+          error = np.nan_to_num(x=data[str(j)]['ERROR'][nlow:nhigh], nan=0) # remove nan
+          avg_error = np.mean(error) # calculate average error for each I array
+          matrixB = [avg_error]*(nhigh-nlow) # generate a column vector to normalize I(q) with
+          if error_mode == "average":
+            sigmaWeighted_I = I / matrixB # error weight each I vector by the average of the error for said vector
+          else: 
+            sigmaWeighted_I = I / error
+          svd_List.append(sigmaWeighted_I)
+
+        svd_List = np.asarray(svd_List) # convert list to numpy array
+
+        ## Run SVD
+
+        svd_results = {}
+        svd_results['Vh'], svd_results['s'], svd_results['U'] = sp.svd(svd_List, 
+          full_matrices=False, # doesn't assume symmetric matrix - but is that safe to assume in this case?
+          lapack_driver='gesdd') # 'gesdd' is the same method used by MATLAB
+
+
+        ## Plotting results
+
+        if plot == True: # allows user to turn plotting off. Makes it easier for me to trouble shoot
+          ### Kratky of input data
+          pairList = []
+          for j in fileList_clean:
+            pairList.append([data[str(j)]['Q'][nlow:nhigh],
+                            data[str(j)]['I(Q)'][nlow:nhigh]*data[str(j)]['Q'][nlow:nhigh]**2])
+          labs = np.linspace(1,len(fileList_clean),
+                             len(fileList_clean))
+          labelList = []
+          # for i in labs:
+          #   labelList.append(str(i))
+          for i in fileList_clean:
+            labelList.append(str(os.path.splitext(str(i))[0]))
+          from random import randint
+          colorList = []
+          n = len(fileList_clean)
+          for i in range(n):
+              colorList.append('#%06X' % randint(0, 0xFFFFFF)) # random color generator
+          # print(colorList)
+          sl = '%s_Titration_Kratky'%str(savelabel)
+
+          self.nPlot_variX_and_Color(pairList,labelList,
+                                     colorList,
+                                     savelabel=sl,
+                                     xlabel='q=$(\\frac{4 \pi sin(\\theta)}{\lambda}) (\\AA^{-1})$',
+                                     ylabel='I(q) $\\cdot q^{2}$',
+                                     LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+                                     set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          ### Singular values
+          del pairList, labelList, colorList, sl
+          points = np.linspace(0,
+                               len(svd_results['s']),
+                               len(svd_results['s']))
+          # points = str(int(points))
+          pairList = [[points,svd_results['s']]]
+          labelList = ['']
+          colorList = ['black']
+          sl = '%s_SVD_SingularVals'%str(savelabel)
+          self.nPointPlot_variX_and_Color(pairList,labelList,
+                                          colorList,
+                                          savelabel=sl,
+                                          xlabel='Index (i)',
+                                          ylabel='Singular Values',
+                                          LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+                                          set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          ### Plotting columns of V
+          pairList = []
+          points = np.linspace(0,
+                               len(svd_results['s']),
+                               len(svd_results['s']))
+          # points = str(int(points))
+          ind = SVs
+          for j in svd_results['Vh'].T[:ind]:
+            pairList.append([points,j])
+
+          labs = np.linspace(1,ind,ind)
+          labelList = []
+          for i in labs:
+            labelList.append(str(i))
+          colorList = []
+          n = ind
+          for i in range(n):
+              colorList.append('#%06X' % randint(0, 0xFFFFFF))
+          sl = '%s_V_Vectors'%str(savelabel)
+
+          self.nPlot_variX_and_Color(pairList,labelList,
+                                     colorList,
+                                     savelabel=sl,
+                                      xlabel='Point',
+                                      ylabel='Columns of V',
+                                      LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+                                      set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          ### Autocorrelation of V
+          '''
+          This is done in RAW for both the left and right singular vectors but it is
+          not clear to me how to do this exactly.. 
+          '''
+
+
+          ### Plotting columns of U
+          pairList = []
+          ind = SVs
+          for j,k in zip(svd_results['U'][:ind], fileList_clean):
+            if error_mode == 'average':
+              pairList.append([data[str(k)]['Q'][nlow:nhigh],j])
+            else:
+              error = np.nan_to_num(x=data[str(k)]['ERROR'][nlow:nhigh], nan=0)
+              pairList.append([data[str(k)]['Q'][nlow:nhigh],j*error])
+
+          labs = np.linspace(1,ind,ind)
+          labelList = []
+          for i in labs:
+            labelList.append(str(i))
+          colorList = []
+          n = ind
+          for i in range(n):
+              colorList.append('#%06X' % randint(0, 0xFFFFFF))
+          sl= '%s_U_Vectors'%str(savelabel)
+
+          self.nPlot_variX_and_Color(pairList,labelList,colorList,
+                                     savelabel=sl,
+                                     xlabel='q=$(\\frac{4 \pi sin(\\theta)}{\lambda}) (\\AA^{-1})$',
+                                     ylabel='Rows of U',
+                                     LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+                                     set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+
+        return svd_results # returns dictionary containing singular values, and both right and left singular vectors
 
     def load_fitFiles(self,fileList):
       '''
