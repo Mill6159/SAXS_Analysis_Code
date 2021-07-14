@@ -48,8 +48,8 @@ class BasicSAXS:
 
         self.atsas_dir=atsas_dir
         if atsas_dir==' ':
-            print('##############################################################')
-            print('No GNOM directory provided, attempting to find it...')
+            # print('##############################################################')
+            # print('No GNOM directory provided, attempting to find it...')
             get_dammif_dir=subprocess.Popen('cd; which dammif', shell=True, stdout=subprocess.PIPE).stdout
             dammif_dir=get_dammif_dir.read()
             dammif_dir_s2=dammif_dir.decode()
@@ -62,9 +62,9 @@ class BasicSAXS:
                 print('We were NOT able to locate the ATSAS-GNOM library on your local computer. Define this manually when calling the BasicSAXS() class.')
                 print('We will terminate the script...')
                 sys.exit('Analysis terminated!!!')
-            else:
-                print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
-            print('##############################################################')
+            # else:
+            #     print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
+            # print('##############################################################')
         else:
             print('#######################')
             print('GNOM directory provided')
