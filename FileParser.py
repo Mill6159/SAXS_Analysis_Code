@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np  
 import SAXS_Calcs as SASM
+import pandas as pd
 
 class FileParser():
 
@@ -12,9 +13,9 @@ class FileParser():
 		Describe class here.
 		'''
 		if notify==True:
-			print('---------------------------')
+			print('-'*50)
 			print('FileParser Class was called')
-			print('---------------------------')
+			print('-'*50)
 
 
 
@@ -317,7 +318,7 @@ class FileParser():
 		diction={}
 		for i in fileList:
 			# if len(fileList)==1: # RM! Some issues when fileList only contains one string entry
-			# 	diction['data_1']=np.loadtxt(fileList, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
+			#   diction['data_1']=np.loadtxt(fileList, dtype={'names': ('Q', 'I(Q)','ERROR'), 'formats': (np.float,np.float,np.float)}, comments='#')
 			# else:
 			# print('Loading multiple .dat files....')
 			# print(i)
@@ -357,17 +358,65 @@ class FileParser():
 	def load_datFilesFull(self,fileList):
 		c=1
 		diction={}
+		nameList = []
 		for i in fileList:
 			x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
+			nameList.append(x)
 
 			diction[str(x)] = np.loadtxt(i, dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (np.float, np.float, np.float)},
 																	 comments = '#')
-		return diction
+		return diction, nameList
 
 
+	def ListBuilder(self, baseName,
+									filesPath):
+		'''
+		'''
+		# exec("%s = %s" % (baseName,baseName + '_Path'))
+		# x = str(filesPath)
+		# x + '_fileList' = []
+		# T_SEC_Subdats_fileList = []
+		#   for j in os.listdir(T_SEC_Subdats_Path):
+		#       if j.endswith('.dat'):
+		#           T_SEC_Subdats_fileList.append(j)
+		#   T_SEC_Subdats_fileList_withPath =  []
+		#   for j in T_SEC_Subdats_fileList:
+		#       T_SEC_Subdats_fileList_withPath.append(T_SEC_Subdats_Path + j)
+		return
+	def move_imageFiles(self, dump_directory,sub_directory):
+		'''
+		Inputs: 
+		(1) dump_directory: the main directory where your .dat files are contained
+		(2) sub_directory: a subdirectory that exists, or will be created, that designates the type of analysis
+											 example path: ../dump_directory/Images/sub_directory
+											 where dump_directory = CP/Succinate Titration
+											 and sub_directory = Guiner_Analysis
+		'''
+		if not os.path.isdir(dump_directory):
+			os.system('mkdir -p %s'%str(dump_directory))
 
-# test = FileParser(notify=False)
+		final_path = dump_directory + 'Images'
+		sub_final_path = dump_directory + 'Images/%s'%str(sub_directory)
+		if not os.path.isdir(final_path):
+				os.system('mkdir -p %s%s'%(str(dump_directory),'Images'))
+				os.system('mkdir -p %s%s/%s'%(str(dump_directory),'Images',str(sub_directory)))
+		else:
+				if not os.path.isdir(sub_final_path):
+						os.system('mkdir -p %s%s/%s'%(str(dump_directory),'Images',str(sub_directory)))
+		os.system('mv *.png %s'%str(sub_final_path))
+		print('Files dropped into directory: %s'%str(sub_final_path))
+		
+	def create_extraDatFile_Directory(self, dump_directory):
+			'''
+			Inputs: 
+			(1) dump_directory: the main directory where your .dat files are contained
+			'''
+			final_path = dump_directory + 'extraDatFiles'
+			if not os.path.isdir(final_path):
+					os.system('mkdir -p %s%s'%(str(dump_directory),'extraDatFiles'))
 
-# datfiles=test.load_datFiles(fileList=('S_A_tkRubisco0mpa_1_data_000001.dat','S_A_tkRubisco10mpa_1_data_000001.dat'))
 
-# print(datfiles['data_1']['Q']) # works!
+# parser = FileParser()
+
+# parser.ListBuilder(filesPath='TEST',
+#                    baseName='T_SEC_Subdats')

@@ -1,4 +1,5 @@
 #!/Users/robmiller/opt/anaconda3/bin/python3
+##!/Users/robmiller/opt/anaconda3/bin/python3
 #######################################################
 ## Describe overall goal of the code here
 #######################################################
@@ -17,14 +18,21 @@ import platform
 from numba import jit
 from numba import types, typed
 from numba.experimental import jitclass
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
+from itertools import cycle
+import matplotlib as mpl
 import math
 import warnings
 import traceback
 import fabio
 # from PlotClass import *
-from FileParser import *
+# from FileParser import *
 from itertools import islice
-
+import scipy.linalg as sp
+import re
+from random import randint
+from colour import Color
 #######################################################
 #######################################################
 # Working notes:
@@ -48,6 +56,369 @@ class SAXSCalcs:
 
         # other stuff.. atsas?
 
+    
+    def nPlot_4Panel(self,
+        pairList_1,labelList_1,colorList_1,
+        pairList_2,labelList_2,colorList_2,
+        pairList_3,labelList_3,colorList_3,
+        pairList_4,labelList_4,colorList_4,
+        savelabel,
+        xlabel='No Label Provided',ylabel='No Label Provided',
+        LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+        darkmode=False,
+        lg_size=14,
+        lg_loc = 'best',
+        alphaGradient = False,
+        alphaSteps = 4):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+
+        s1 = 14
+        s2 = 20
+        fig = plt.figure(figsize=(12,8))
+        ax = plt.subplot2grid((4,6),(0,0),rowspan=2,colspan=3)
+        ax1 = plt.subplot2grid((4,6),(0,3),rowspan=2,colspan=3)
+        ax2 = plt.subplot2grid((4,6),(2,0),rowspan=2,colspan=3)
+        ax3 = plt.subplot2grid((4,6),(2,3),rowspan=2,colspan=3)
+        for tick in ax.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(s1) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(s1) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(s2) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(s2) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+        for tick in ax2.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(s2) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax2.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(s2) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+        for tick in ax3.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(s1) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax3.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(s1) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+
+
+        cycol = cycle(['-','-','-'])  
+        alphaCycol = cycle(np.linspace(1,0.1,alphaSteps))
+
+        if alphaGradient == False:
+          for d,e,f,w,y,x in zip(pairList_3,colorList_3,labelList_3,
+            pairList_4,colorList_4,labelList_4):
+              ax2.plot(d[0],d[1],
+                       label=f,
+                       linewidth=linewidth,
+                       color=e,
+                       linestyle=next(cycol))
+              ax3.plot(w[0],w[1],
+                       label=x,
+                       linewidth=linewidth,
+                       color=y,
+                       linestyle=next(cycol))
+        else:
+          for d,e,f,w,y,x in zip(pairList_3,colorList_3,labelList_3,
+            pairList_4,colorList_4,labelList_4):
+              ax2.plot(d[0],d[1],
+                       label=f,
+                       linewidth=linewidth,
+                       color=e,
+                       linestyle=next(cycol))
+              ax3.plot(w[0],w[1],
+                       label=x,
+                       linewidth=linewidth,
+                       color=y,
+                       linestyle=next(cycol),
+                       alpha=next(alphaCycol))
+
+
+  
+
+
+        for i,j,z in zip(pairList_1,colorList_1,labelList_1):
+            if linewidth == 1:
+              ax.plot(i[0],i[1],
+                      label=z,
+                      linewidth=linewidth,
+                      color=j,
+                      linestyle=next(cycol))
+            else:
+              ax.plot(i[0],i[1],
+                      label=z,
+                      linewidth=linewidth-1,
+                      color=j,
+                      linestyle=next(cycol))
+
+
+        for a,b,c in zip(pairList_2,colorList_2,labelList_2):
+            ax1.semilogy(a[0],a[1],
+            label=c,
+            linewidth=0,
+            color=b,
+            linestyle=None,
+            marker='o')
+
+        ax.set_ylabel('I(q) $\\rm \\cdot q^{2}$', size=18)
+        ax.set_xlabel('q ($\\rm \\AA^{-1}$)', size=18)
+        ax1.set_ylabel('Singular Values', size=18)
+        ax1.set_xlabel('Index (i)', size=18)
+        ax1.set_ylabel('Singular Values', size=18)
+        ax1.set_xlabel('Index (i)', size=18)
+        ax2.set_ylabel('Columns of V', size=18)
+        ax2.set_xlabel('Index (i)', size=18)
+        ax3.set_ylabel('Rows of U', size=18)
+        ax3.set_xlabel('q ($\\rm \\AA^{-1}$)', size=18)
+
+        ax2.legend(numpoints=1,fontsize=lg_size,loc=lg_loc)
+        ax3.legend(numpoints=1,fontsize=lg_size,loc=lg_loc)
+
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show(fig);
+
+
+    def nPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
+              lg_size=8):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',markeredgewidth=2)
+        plt.rc('font',**{'sans-serif': ['Avenir']})
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(6,4.5)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(13) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(13) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        cycol = cycle(['-','-','-'])    
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                            color=j,
+                            linestyle=next(cycol))
+                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
+        elif LinLin==True:
+            for i,j,z in zip(pairList,colorList,labelList):
+                plt.plot(i[0],i[1],
+                            label=z,
+                            linewidth=linewidth,
+                            color=j,
+                            linestyle=next(cycol))
+                n+=1
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
+                n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=16)
+        plt.xlabel(xlabel,size=16)
+        plt.legend(numpoints=1,fontsize=lg_size,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
+    def nPointPlot_variX_and_Color(self,pairList,labelList,colorList,savelabel,xlabel='No Label Provided',ylabel='No Label Provided',
+              LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+              set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
+              lg_size=8):
+        '''
+        :param pairList: list of lists (tuple), must be [[x1,y1],...[xn,yn]]
+        :param labelList: list of length n, labeling the sets of tuples in pairList
+        :param savelabel:
+        :param xlabel:
+        :param ylabel:
+        :param linewidth:
+        :return:
+        '''
+
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',markeredgewidth=2)
+        plt.rc('font',**{'sans-serif': ['Avenir']})
+        if darkmode==True:
+            plt.style.use('dark_background')
+            c1='#EFECE8'
+        else:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            c1='k'
+
+        fig=plt.figure(figsize=(6,4.5)) # set figure dimensions
+        ax1=fig.add_subplot(1,1,1) # allows us to build more complex plots
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label1.set_fontsize(15) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label1.set_fontsize(15) # scale for publication needs
+            tick.label1.set_fontname('Avenir')
+
+        if LogLin == True and LinLin == True and LogLog == True: # kicks you out of the function if you set more then one mode to true
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LinLin == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LogLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+        elif LinLin == True and LogLog == True:
+            print("Cannot set more than one mode equal to True")
+            return
+
+        n=0
+        if LogLin==True:
+            for i,j in zip(pairList,colorList):
+                plt.semilogy(i[0],i[1],
+                            label=labelList[n],
+                            linestyle=None,
+                            linewidth=linewidth,
+                            marker = 'o',
+                            markersize = linewidth + 5,
+                            color=j)
+                n+=1
+                # plt.semilogy(i[2],i[3],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             color=c1)
+                # n+=1
+        elif LinLin==True:
+            for i,j in zip(pairList,colorList):
+              plt.plot(i[0],i[1],
+              label=labelList[n],
+              linestyle=None,
+              linewidth=linewidth,
+              marker = 'o',
+              markersize = linewidth + 5,
+              color=j)
+                # plt.plot(i[0],i[1],
+                #             label=labelList[n],
+                #             linewidth=linewidth,
+                #             linestyle='-',
+                #             color=j,
+                #             marker='o',
+                #             markersize=linewidth+10)
+              n+=1
+                # plt.plot(i[2],i[3],
+                #             label=labelList[n],
+                #             color=c1,
+                #             linewidth=linewidth)
+                # n+=1
+        elif LogLog==True:
+            for i in pairList:
+                plt.plot(i[0],i[1],
+                            label=labelList[n],
+                            linewidth=linewidth,
+                             linestyle='dotted')
+                n+=1
+                plt.plot(i[2],i[3],
+                            label=labelList[n],
+                            linewidth=linewidth)
+                n+=1
+                ax1.set_yscale('log')
+                ax1.set_xscale('log')
+
+
+        plt.ylabel(ylabel,size=16)
+        plt.xlabel(xlabel,size=16)
+        plt.legend(numpoints=1,fontsize=lg_size,loc='best')
+
+
+        if set_ylim==True:
+            ax1.set_ylim(ylow,yhigh)
+        # else:
+            # print('Using default y-limit range for the plot: %s'%savelabel)
+        fig.tight_layout()
+
+        plt.savefig(savelabel+'.png',format='png',bbox_inches='tight',dpi=300)
+        plt.show()
+
     def superimpose(self,ref_q,ref_i,qmin,qmax,scale_list,choice='Scale'):
         """
         Find the scale and/or offset factor between a reference curve and the
@@ -65,43 +436,49 @@ class SAXSCalcs:
         q_star = q_star[q_star_qrange_min:q_star_qrange_max]
         i_star = i_star[q_star_qrange_min:q_star_qrange_max]
 
+        scaleListout = []
         for each_scale in scale_list:
 
-            each_q = each_scale[0]
-            each_i = each_scale[1]
+          each_q = each_scale[0]
+          each_i = each_scale[1]
 
-            each_q_qrange_min,each_q_qrange_max = (0,len(each_scale[0]))
+          each_q_qrange_min,each_q_qrange_max = (0,len(each_scale[0]))
 
-            # resample standard curve on the data q vector
-            min_q_each = each_q[each_q_qrange_min]
-            max_q_each = each_q[each_q_qrange_max - 1]
+          # resample standard curve on the data q vector
+          min_q_each = each_q[each_q_qrange_min]
+          max_q_each = each_q[each_q_qrange_max - 1]
 
-            min_q_idx = np.where(q_star >= min_q_each)[0][0]
-            max_q_idx = np.where(q_star <= max_q_each)[0][-1]
+          min_q_idx = np.where(q_star >= min_q_each)[0][0]
+          max_q_idx = np.where(q_star <= max_q_each)[0][-1]
 
-            if np.all(q_star[min_q_idx:max_q_idx + 1] != each_q[each_q_qrange_min:each_q_qrange_max]):
-                I_resamp = np.interp(q_star[min_q_idx:max_q_idx + 1],
-                                     each_q[each_q_qrange_min:each_q_qrange_max],
-                                     each_i[each_q_qrange_min:each_q_qrange_max])
-            else:
-                I_resamp = each_i[each_q_qrange_min:each_q_qrange_max]
+          if np.all(q_star[min_q_idx:max_q_idx + 1] != each_q[each_q_qrange_min:each_q_qrange_max]):
+              I_resamp = np.interp(q_star[min_q_idx:max_q_idx + 1],
+                                   each_q[each_q_qrange_min:each_q_qrange_max],
+                                   each_i[each_q_qrange_min:each_q_qrange_max])
+          else:
+              I_resamp = each_i[each_q_qrange_min:each_q_qrange_max]
 
-            if not np.all(I_resamp == i_star):
-                if choice == 'Scale and Offset':
-                    A = np.column_stack([I_resamp,np.ones_like(I_resamp)])
-                    scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1])[0]
-                elif choice == 'Scale':
-                    A = np.column_stack([I_resamp,np.zeros_like(I_resamp)])
-                    scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1],rcond=None)[0]
-                    offset = 0
-                elif choice == 'Offset':
-                    A = np.column_stack([np.zeros_like(I_resamp),np.ones_like(I_resamp)])
-                    scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1] - I_resamp)[0]
-                    scale = 1
+          scales=[]
+          if not np.all(I_resamp == i_star):
+            print('mode 3')
+            if choice == 'Scale and Offset':
+                A = np.column_stack([I_resamp,np.ones_like(I_resamp)])
+                scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1])[0]
+                scaleListout.append(scale)
+            elif choice == 'Scale':
+                A = np.column_stack([I_resamp,np.zeros_like(I_resamp)])
+                scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1],rcond=None)[0]
+                offset = 0
+                scaleListout.append(scale)
+            elif choice == 'Offset':
+                A = np.column_stack([np.zeros_like(I_resamp),np.ones_like(I_resamp)])
+                scale,offset = np.linalg.lstsq(A,i_star[min_q_idx:max_q_idx + 1] - I_resamp)[0]
+                scale = 1
+                scaleListout.append(scale)
 
-                return scale,offset
-                # each_scale.scale(scale)
-                # each_scale.offset(offset)
+        return scale,offset,scaleListout
+              # each_scale.scale(scale)
+              # each_scale.offset(offset)
 
     def quickNormalize(self,sig):
         '''
@@ -118,6 +495,309 @@ class SAXSCalcs:
         for i in range(len(sig)):
             Ynew[i] = (sig[i] - minY) / (maxY - minY)
         return Ynew
+
+    def SVD(self,
+        file_path,
+        fileList,
+        nmin=0,
+        qmax=None,
+        SVs=3,
+        plot=True,
+        savelabel='SVD',
+        error_mode='average',
+        input_mode='Lin-Lin',
+        alphaGradient = True):
+        '''
+        Doc string
+        
+        Inputs:
+        file_path: the full directory path to the directory that contains the .dat files that are to be processed by the SVD algorithm
+
+        fileList: A list of files to grab from the 'file_path' directory, default is to grab ALL .dat files in the 'file_path' directory
+
+        nmin: How many points to cleave at the beginning
+
+        qmax: Maximum q-value 
+
+        SVs: How many singular values to plot in the V/U plots
+
+        plot: True or False, creates and saves plot regardless.
+
+        savelabel: savelabel for the figure
+
+        error_mode: 'average' or 'direct' BUT 'direct' is technically wrong, just a trick Darren found.
+
+        input_mode: 'Lin-Lin' or 'Kratky'
+
+        alphaGradient: True or False. If true, rows of U plot with use a alpha gradient to make profiles increasingly transparent.
+
+        Returns:
+        Left singular vector: U
+        Singular values: s
+        Right singular vectors: Vh
+        A combined plot of them if plot == True
+        '''
+
+        # Set up file path and inputs
+
+
+        def load_datFilesFull(fileList):
+          c=1
+          diction={}
+          for i in fileList:
+            x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
+
+            diction[str(x)] = np.loadtxt(i, 
+              dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 
+              'formats': (float, float, float)},
+              comments = '#')
+          return diction
+
+        if fileList == 'None':
+          fileList_clean = []
+          for j in os.listdir(file_path): # ensures we are only grabbing .dat file
+            if j.endswith(".dat"):
+              fileList_clean.append(j)
+        else:
+          fileList_clean = fileList
+
+        fileList_clean = list(fileList_clean)
+
+        datFileList = []
+        for j in fileList_clean:
+            datFileList.append(file_path + j)
+
+        ## Load in data
+
+        data = load_datFilesFull(fileList=datFileList)
+
+        ## Print messages
+        pn=60
+        print('#'*pn)
+        print('--> Running SVD')
+        print('#'*pn)
+
+        ## Singular values input
+        print('It has been assumed there are %s significant singular values.\nSome output plots will reflect this.'%str(SVs))
+        print('#'*pn)
+        ## Final message
+        print('\n')
+        if input_mode == 'Kratky':
+            print('Input as Kratky [I * q^2]')
+            print('#'*pn)
+
+
+        dim1 = len(datFileList) # first dimension of the array - i.e. how many input files
+
+        # Set data limits
+
+        c=0
+        for j in fileList_clean: # iterate through the list and the nmax that corresponds to qmax
+          if qmax is not None:
+            x = np.where(data[str(j)]['Q'] > qmax)
+            nhigh = x[0][0]
+          c+=1
+          if c >= 1:
+            break
+          else:
+            minList = []
+            for i in fileList_clean:
+              minList.append(len(data[str(i)]['I(Q)']))
+              nhigh = np.min(minList)
+
+        nlow = int(nmin)
+
+        ## Build error List
+
+        n = 0
+        matrixB = []
+        for j in fileList_clean:
+          error = np.nan_to_num(x=data[str(j)]['ERROR'][nlow:nhigh], nan=0) # remove nan
+          avg_error = np.mean(error) # calculate average error for the I array
+          matrixB.append([avg_error]*(nhigh-nlow))
+          matrixB = list(matrixB[0]) # have to flatten - i.e. array within array
+          n+=1
+          if n >= 1:
+            break
+
+        ## Build SVD list
+
+        svd_List = []
+        for j in fileList_clean:
+          I = np.nan_to_num(x=data[str(j)]['I(Q)'][nlow:nhigh], nan=0) # * remove nan
+          q = np.nan_to_num(x=data[str(j)]['Q'][nlow:nhigh], nan=0) # * remove nan
+          error = np.nan_to_num(x=data[str(j)]['ERROR'][nlow:nhigh], nan=0) # * remove nan
+          if error_mode == "average":
+            sigmaWeighted_I = []
+            for i,j in zip(I, matrixB):
+              sigmaWeighted_I.append(i/j)
+          else: 
+            sigmaWeighted_I = I / error
+
+          if input_mode == 'Lin-Lin':
+            svd_List.append(sigmaWeighted_I)
+          elif input_mode == 'Kratky':
+            kratky_I = sigmaWeighted_I * (q**2) # ! Is this the proper method for propagating error in this case?
+            svd_List.append(kratky_I)
+
+        svd_List = np.asarray(svd_List) # * convert list to numpy array
+
+        ## Run SVD
+
+        svd_results = {}
+        svd_results['Vh'], svd_results['s'], svd_results['U'] = sp.svd(svd_List, 
+          full_matrices=False, # ? doesn't assume symmetric matrix - but is that safe to assume in this case?
+          lapack_driver='gesdd') # * 'gesdd' is the same method used by MATLAB
+
+
+        ## Plotting results
+
+        if plot == True: # allows user to turn plotting off. Makes it easier for me to trouble shoot
+          ### Kratky of input data
+          pairList_1 = []
+          for j in fileList_clean:
+            pairList_1.append([data[str(j)]['Q'][nlow:nhigh],
+                            data[str(j)]['I(Q)'][nlow:nhigh]*data[str(j)]['Q'][nlow:nhigh]**2])
+          labs = np.linspace(1,len(fileList_clean),
+                             len(fileList_clean))
+          labelList_1 = []
+          # for i in labs:
+          #   labelList.append(str(i))
+          for i in fileList_clean:
+            labelList_1.append(str(os.path.splitext(str(i))[0]))
+
+          colorList_1 = []
+          c1 = Color("#EB7302")
+          c2 = Color("#02CFEB")
+          gradient = list(c1.range_to(c2, len(labelList_1)))
+
+          for j in gradient:
+            colorList_1.append(str(j))     
+          # print(colorList)
+          sl = '%s_Titration_Kratky'%str(savelabel)
+
+          # self.nPlot_variX_and_Color(pairList=pairList_1,
+          #   labelList=labelList_1,
+          #   colorList=colorList_1,
+          #   savelabel=sl,
+          #   xlabel='q=$(\\frac{4 \pi sin(\\theta)}{\lambda}) (\\AA^{-1})$',
+          #   ylabel='I(q) $\\cdot q^{2}$',
+          #   LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+          #   set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          ### Singular values
+          # del pairList, labelList, colorList, sl
+          points = np.linspace(0,
+                               len(svd_results['s']),
+                               len(svd_results['s']))
+          # points = str(int(points))
+          pairList_2 = [[points,svd_results['s']]]
+          labelList_2 = ['%s'%str(savelabel)]
+          colorList_2 = ['black']
+          sl = '%s_SVD_SingularVals'%str(savelabel)
+          # self.nPointPlot_variX_and_Color(pairList=pairList_2,labelList=labelList_2,
+          #                                 colorList=colorList_2,
+          #                                 savelabel=sl,
+          #                                 xlabel='Index (i)',
+          #                                 ylabel='Singular Values',
+          #                                 LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+          #                                 set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          
+          ### --> Plotting columns of V
+          pairList_3 = []
+          points = np.linspace(0,
+                               len(svd_results['s']),
+                               len(svd_results['s']))
+          # points = str(int(points))
+          ind = SVs
+          for j in svd_results['Vh'].T[:ind]:
+            pairList_3.append([points,j])
+
+          labs = np.linspace(1,ind,ind)
+          labelList_3 = []
+          for i in labs:
+            labelList_3.append(str(i))
+          n = ind
+
+          colorList_3 = []
+          c1 = Color("#EB7302")
+          c2 = Color("#02CFEB")
+          gradient = list(c1.range_to(c2, len(labelList_3)))
+
+          for j in gradient:
+            colorList_3.append(str(j))  
+
+          sl = '%s_V_Vectors'%str(savelabel)
+
+          # self.nPlot_variX_and_Color(pairList=pairList_3,labelList=labelList_3,
+          #                            colorList=colorList_3,
+          #                            savelabel=sl,
+          #                             xlabel='Point',
+          #                             ylabel='Columns of V',
+          #                             LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+          #                             set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+
+
+          ### --> Autocorrelation of V
+          '''
+          This is done in RAW for both the left and right singular vectors but it is
+          not clear to me how to do this exactly.. 
+          '''
+
+
+          ### --> Plotting columns of U
+          pairList_4 = []
+          ind = SVs
+          for j,k in zip(svd_results['U'][:ind], fileList_clean):
+            if error_mode == 'average':
+              pairList_4.append([data[str(k)]['Q'][nlow:nhigh],j])
+            else:
+              error = np.nan_to_num(x=data[str(k)]['ERROR'][nlow:nhigh], nan=0)
+              pairList_4.append([data[str(k)]['Q'][nlow:nhigh],j*error])
+
+          labs = np.linspace(1,ind,ind)
+          labelList_4 = []
+          for i in labs:
+            labelList_4.append(str(i))
+          n = ind
+
+          colorList_4 = []
+          c1 = Color("#EB7302")
+          c2 = Color("#02CFEB")
+          gradient = list(c1.range_to(c2, len(labelList_4)))
+
+          for j in gradient:
+            colorList_4.append(str(j))  
+
+          sl= '%s_U_Vectors'%str(savelabel)
+
+          # self.nPlot_variX_and_Color(pairList=pairList_4,labelList=labelList_4,colorList=colorList_4,
+          #                            savelabel=sl,
+          #                            xlabel='q=$(\\frac{4 \pi sin(\\theta)}{\lambda}) (\\AA^{-1})$',
+          #                            ylabel='Rows of U',
+          #                            LogLin=False,LinLin=True,LogLog=False,linewidth=3,
+          #                            set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False)
+
+          ###  -->  4 Panel Plot
+
+          self.nPlot_4Panel(
+            pairList_1=pairList_1,labelList_1=labelList_1,colorList_1=colorList_1,
+            pairList_2=pairList_2,labelList_2=labelList_2,colorList_2=colorList_2,
+            pairList_3=pairList_3,labelList_3=labelList_3,colorList_3=colorList_3,
+            pairList_4=pairList_4,labelList_4=labelList_4,colorList_4=colorList_4,
+            savelabel='%s_4PanelPlot'%str(savelabel),
+            xlabel='No Label Provided',ylabel='No Label Provided',
+            LogLin=True,LinLin=False,LogLog=False,linewidth=2,
+            darkmode=False,
+            lg_size=14,
+            lg_loc = 'best',
+            alphaGradient = alphaGradient,
+            alphaSteps = SVs)
+
+
+        return svd_results # returns dictionary containing singular values, and both right and left singular vectors
 
     def load_fitFiles(self,fileList):
       '''
@@ -262,37 +942,42 @@ class SAXSCalcs:
     def runCrysol_single(self,
                          filename,
                          PDB_File,
-                         qmax=0.3):
+                         qmax=0.3,
+                         savedirectory=str(os.getcwd()),
+                         L1 = 'Experimental',
+                         L2 = 'Model',
+                         c1 = 'black',
+                         c2 = '#1AE2CD',
+                         kratky=False):
         '''
         Description
+
+        Inputs:
+        PDB_File: Must contain full file path to the PDB file
+
+
+        Outputs:
+
         '''
 
-        cwd = str(os.getcwd())
-        crysol_dir = '/Crysol_Modeling' # create folder for modeling files
+        ## Set up directory for output files
+        cwd = savedirectory
+        crysol_dir = 'Crysol_Modeling' # create folder for modeling files
         save_dir = cwd + crysol_dir
 
         if not os.path.exists(save_dir):
           os.mkdir(save_dir) # create it if it doesn't already exist
 
-        os.chdir(save_dir) # switch to that directory
-
-        print(save_dir)
-
-        # Import data files
-
-        fileList = filename
-
-        test = os.path.basename(fileList)
-        print(test)
-
-        output_name = cwd + crysol_dir + '/fileList'
+        ## Import data files
+        basename = os.path.basename(filename)
+        basename_pdb = os.path.basename(PDB_File)
+        output_name = cwd + crysol_dir + '/%s'%str(os.path.splitext(str(basename))[0]) + '_%s'%str(os.path.splitext(str(basename_pdb))[0])
 
         ## Crysol Modeling
 
-        print('CRYSOL RUNNING')
+        print('--> Running runCrysol_single Function\n')
         # n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
         cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(output_name))
-        print(cmd)
         proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
         (out, err) = proc.communicate()
         # print(out)
@@ -300,27 +985,26 @@ class SAXSCalcs:
         crysol_List=[]
         crysol_List.append(output_name + '.log')
 
-        print(crysol_List)
-
-            
         crysol_fits = []
         crysol_fits.append(output_name + '.fit')
 
-        print(crysol_fits)
 
+        print('Command passed to terminal:\n')
+        print(cmd)
+        print('')
         ##### Fancier parsing..
-
 
         crysol_files = self.load_fitFiles(fileList=crysol_fits)
 
         export_dictionary={}
             
-        for fn,k,z in zip(crysol_List,crysol_files,fileList):
+        for fn,k in zip(crysol_List,crysol_files):
             crysol_parse=[]
             crysol_parse2=[]
             with open(fn, "r") as f: # important to use with command when dealing with files
                 counter = 0
-                print('File: %s' %str(z))
+                print('Input Data File: %s' %str(os.path.basename(filename)))
+                print('Input PDB File: %s' %str(os.path.basename(PDB_File)))
                 c=0
                 for line in f:
                     c+=1
@@ -336,71 +1020,57 @@ class SAXSCalcs:
             print('Chi-Squared: ',chi_sq)
             print('')
 
+
             Q = crysol_files[str(k)]['Q']
             expt_IQ = crysol_files[str(k)]['I(Q)']
             model_IQ = crysol_files[str(k)]['I(Q)_mod']
 
-            export_dictionary['%s'%str(z)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
+
+            if kratky == True:
+              pairList = [
+              [Q, expt_IQ*(Q**2)],
+              [Q, model_IQ*(Q**2)]]
+              labelList = [str(L1), str(L2)]
+              colorList = [str(c1), str(c2)]
+              savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+
+              self.nPlot_variX_and_Color(pairList,
+                                         labelList,
+                                         colorList,
+                                         savelabel,
+                                         xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                         ylabel='$\\rm I(q) \\cdot q^{2}$ ',
+                                         LogLin=False,LinLin=True,
+                                         LogLog=False,linewidth=3,
+                                         set_ylim=False,ylow=0.0001,
+                                         yhigh=1,darkmode=False,
+                                         lg_size=14)
+            else:
+              # Log-Lin
+              pairList = [
+              [Q, expt_IQ],
+              [Q, model_IQ]]
+              labelList = [str(L1), str(L2)]
+              colorList = [str(c1), str(c2)]
+              savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+
+              self.nPlot_variX_and_Color(pairList,
+                                         labelList,
+                                         colorList,
+                                         savelabel,
+                                         xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                         ylabel='$\\rm I(q)$ ',
+                                         LogLin=True,LinLin=False,
+                                         LogLog=False,linewidth=3,
+                                         set_ylim=False,ylow=0.0001,
+                                         yhigh=1,darkmode=False,
+                                         lg_size=14)
+
+            export_dictionary['%s'%str(filename)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
 
         return export_dictionary
 
 
-        def load_fitFiles(file):
-          '''
-          Just loads in the intensity file generated by crysol.
-          '''
-          c=1
-          diction={}
-          diction['data_%s'%str(c)]=np.loadtxt(file, dtype={'names': ('Q', 'I(Q)','Q_mod','I(Q)_mod'), 
-                                               'formats': (np.float,np.float,np.float,np.float)}, comments='#',
-                                               skiprows=1)
-          return diction
-
-        # crysol_files = load_fitFiles(file=crysol_fits)
-            
-        # crysol_parse=[]
-        # crysol_parse2=[]
-        # with open(crysol_List, "r") as f: # important to use with command when dealing with files
-        #     counter = 0
-        #     print('File: %s' %str(filename))
-        #     c=0
-        #     for line in f:
-        #         c+=1
-        #         if 'Chi^2' in line:
-        #             crysol_parse.append(''.join(islice(f, 1)))
-        #         if 'Rg from the slope of net intensity' in line:
-        #             print(line)
-        #             crysol_parse2.append(line)
-        
-        # Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
-        # print('Final Rg (A): ', Rg)
-        # chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
-        # print('Chi-Squared: ',chi_sq)
-
-        # Q = crysol_files[str(crysol_files)]['Q']
-        # expt_IQ = crysol_files[str(crysol_files)]['I(Q)']
-        # model_IQ = crysol_files[str(crysol_files)]['I(Q)_mod']
-
-        # pairList=[[crysol_files[str(crysol_files)]['Q'],crysol_files[str(crysol_files)]['I(Q)']],
-        #           [crysol_files[str(crysol_files)]['Q'],crysol_files[str(crysol_files)]['I(Q)_mod']]]
-        # labelList=['%s'%str(filename),'Model']
-        # colorList=['#9B9B9B','#00B2AF']
-        # X1=crysol_files[str(crysol_files)]['Q']
-        # Y1=crysol_files[str(crysol_files)]['I(Q)']
-        # X2=crysol_files[str(crysol_files)]['Q']
-        # Y2=crysol_files[str(crysol_files)]['I(Q)_mod']
-        # Y1err=[1] * len(X1)
-      
-        # skip=next((i for i, x in enumerate(Y1) if x), None) # x!= 0 for strict match
-
-        # figs.vertical_stackPlot(X1=X1[skip:],Y1=Y1[skip:],Y1err=Y1err[skip:],X2=X2[skip:],Y2=Y2[skip:],ylabel1='Intensity, I(Q)',
-        #                         ylabel2='Residuals',xlabel='Q ($\mathring{A}^{-1}$)',
-        #                         Label1='%s'%filename, Label2='Crysol Model',saveLabel='%s_Crysol_fit_EM10mer'%str(filename),
-        #                         bottomPlot_yLabel='$ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
-        #                         LinLin=False,
-        #                         linewidth=4,labelSize=20,darkmode=False,plot=True)
-
-        return Q, expt_IQ, model_IQ
 
 class IFTM(object):
     """
@@ -1245,15 +1915,3 @@ class SAXS_FileReader(object):
 
 
         return sasm_list, loaded_data
-
-
-
-
-
-
-
-
-
-
-
-

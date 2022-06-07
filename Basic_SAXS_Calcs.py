@@ -42,34 +42,34 @@ class BasicSAXS:
         '''
         self.notify = notify
         if self.notify == True:
-            print('--------------------------------------------------------------')
+            print('-'*50)
             print('Basic SAXS Calculations Class was called')
+            print('-'*50)
 
 
         self.atsas_dir=atsas_dir
         if atsas_dir==' ':
-            print('##############################################################')
+            print('#'*75)
             print('No GNOM directory provided, attempting to find it...')
             get_dammif_dir=subprocess.Popen('cd; which dammif', shell=True, stdout=subprocess.PIPE).stdout
             dammif_dir=get_dammif_dir.read()
             dammif_dir_s2=dammif_dir.decode()
-            print(dammif_dir_s2)
+            # print(dammif_dir_s2)
             dammif_dir_s3=re.sub(r'\w*dammif\w*', '', dammif_dir_s2)
             gnom_dir=dammif_dir_s3.strip()+'gnom'
             self.atsas_dir=gnom_dir # setting gnom directory finally
-            print(self.atsas_dir)
+            # print(self.atsas_dir)
             if '/bin/' not in self.atsas_dir:
                 print('We were NOT able to locate the ATSAS-GNOM library on your local computer. Define this manually when calling the BasicSAXS() class.')
                 print('We will terminate the script...')
                 sys.exit('Analysis terminated!!!')
             else:
-                print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculation may fail'%gnom_dir)
-            print('##############################################################')
+                print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculations may fail'%gnom_dir)
+            print('#'*75)
         else:
-            print('#######################')
+            print('#'*75)
             print('GNOM directory provided')
-            print('#######################')
-            print('--------------------------------------------------------------')
+            print('#'*75)
 
         self.plots=PlotClass(notify=False)
         self.FileParser=FileParser(notify=False)
@@ -218,18 +218,20 @@ class BasicSAXS:
 
         print('Guiner Analysis:')
         print('The input file was: %s'%file)
-        print('The Rg is approximately %.2f'%hbRg + ' ' + '+/- %.2f'%(hbRg_Err) + 'Angstroms')
+        print('The Rg is approximately %.2f'%hbRg + ' ' + '+/- %.2f'%(hbRg_Err) + 'Å')
         print('The guiner range is approximately: (qminRg, qmaxRg) - %.2f, %.2f' % (hb_qminRg,hb_qmaxRg))
 
         if plot==True:
             self.plots.vertical_stackPlot_Guiner(X1=q,Y1=I,Y1err=I_Err,
                 X2=q,Y2=model[nmin:nmax],idxmin=nmin,idxmax=nmax,
-                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\rm \\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\rm \\AA^{-1}$)',
+                bottomPlot_yLabel='$\\rm ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
                 Label1='Expt',Label2='Model',darkmode=darkmode,saveLabel=savelabel)
         else:
             self.plots.vertical_stackPlot_Guiner(X1=q,Y1=I,Y1err=I_Err,
                 X2=q,Y2=model[nmin:nmax],idxmin=nmin,idxmax=nmax,
-                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\AA^{-1}$)',
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q = $\\rm \\frac{4 \pi sin(\\theta)}{\\lambda}$ ($\\rm \\AA^{-1}$)',
+                bottomPlot_yLabel='$\\rm ln(\\frac{I_{expt}(q)}{I_{model}(q)}) \cdot (\\frac{1}{\sigma_{expt}})$',
                 Label1='Expt',Label2='Model',darkmode=darkmode,plot=False,saveLabel=savelabel)
 
         return hbI0,hbRg,hbRg_Err,hb_qminRg,hb_qmaxRg,model
@@ -309,12 +311,12 @@ class BasicSAXS:
         if plot==True:
             self.plots.vertical_stackPlot_Guiner(X1=q,Y1=i,Y1err=err,
                 X2=q,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
-                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$\\rm ^{2}$ = $\\rm (\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\rm \\AA^{-2}$)',
                 Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=True)
         else:
             self.plots.vertical_stackPlot_Guiner(X1=q,Y1=i,Y1err=err,
                 X2=q,Y2=self.lineModel(q[idx_min:idx_max]**2,slope,inter),idxmin=idx_min, idxmax=idx_max,
-                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$^{2}$ = $(\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\AA^{-2}$)',
+                ylabel1='ln(I(q))',ylabel2='Residuals (a.u.)',xlabel='q$\\rm ^{2}$ = $\\rm (\\frac{4 \pi sin(\\theta)}{\\lambda})^{2}$ ($\\rm \\AA^{-2}$)',
                 Label1='Expt',Label2='Model',saveLabel=saveLabel,plot=False)
             if output_suppress is not True:
                 print('No plots were generated. Set plot=True to visualize the result.')
