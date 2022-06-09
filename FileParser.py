@@ -384,41 +384,41 @@ class FileParser():
 		#       T_SEC_Subdats_fileList_withPath.append(T_SEC_Subdats_Path + j)
 		return
 
-  def createFileList(directorypath):
-    '''
-    '''
-    print('Reading in .dat files from directory: %s'%str(directorypath))
-    print('Directory contenets: ',os.listdir(directorypath))
-    nameList = [] # create empty list
-    for j in os.listdir(directorypath):
-      if j.endswith('.dat'): # only grab files with .dat extension
-        nameList.append(j) # append file name
-    fileList = [] # name list with path appended
-    for i in nameList:
-      fileList.append(str(directorypath) + '/%s'%str(i)) # input for load_datFiles function (needs full path)
-    return nameList, fileList
+	def createFileList(self,directorypath):
+		'''
+		'''
+		print('Reading in .dat files from directory: %s'%str(directorypath))
+		print('Directory contenets: ',os.listdir(directorypath))
+		nameList = [] # create empty list
+		for j in os.listdir(directorypath):
+			if j.endswith('.dat'): # only grab files with .dat extension
+				nameList.append(j) # append file name
+		fileList = [] # name list with path appended
+		for i in nameList:
+			fileList.append(str(directorypath) + '/%s'%str(i)) # input for load_datFiles function (needs full path)
+		return nameList, fileList
 
-  def load_datFiles(fileList):
-    '''
-    Explanation:
+	def load_datFiles(self,fileList):
+		'''
+		Explanation:
 
 
-    '''
-    c=1
-    diction={}
-    nameList = []
-    if len(fileList) > 1:
-      for i in fileList:
-        x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
-        nameList.append(x)
-        diction[str(x)] = np.loadtxt(i, dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (float, float, float)},
-        comments = '#')
-    else:
-      x = re.sub(".*/", "", fileList[0]) # replaces any of the path and grabs just the file name
-      nameList.append(x)
-      diction[str(x)] = np.loadtxt(fileList[0], dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (float, float, float)},
-      comments = '#')
-    return diction, nameList
+		'''
+		c=1
+		diction={}
+		nameList = []
+		if len(fileList) > 1:
+			for i in fileList:
+				x = re.sub(".*/", "", i) # replaces any of the path and grabs just the file name
+				nameList.append(x)
+				diction[str(x)] = np.loadtxt(i, dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (float, float, float)},
+				comments = '#')
+		else:
+			x = re.sub(".*/", "", fileList[0]) # replaces any of the path and grabs just the file name
+			nameList.append(x)
+			diction[str(x)] = np.loadtxt(fileList[0], dtype = {'names': ('Q', 'I(Q)', 'ERROR'), 'formats': (float, float, float)},
+			comments = '#')
+		return diction, nameList
 
 	def move_imageFiles(self, dump_directory,sub_directory):
 		'''

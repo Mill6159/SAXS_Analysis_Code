@@ -48,28 +48,29 @@ class BasicSAXS:
 
 
         self.atsas_dir=atsas_dir
-        if atsas_dir==' ':
-            print('#'*75)
-            print('No GNOM directory provided, attempting to find it...')
-            get_dammif_dir=subprocess.Popen('cd; which dammif', shell=True, stdout=subprocess.PIPE).stdout
-            dammif_dir=get_dammif_dir.read()
-            dammif_dir_s2=dammif_dir.decode()
-            # print(dammif_dir_s2)
-            dammif_dir_s3=re.sub(r'\w*dammif\w*', '', dammif_dir_s2)
-            gnom_dir=dammif_dir_s3.strip()+'gnom'
-            self.atsas_dir=gnom_dir # setting gnom directory finally
-            # print(self.atsas_dir)
-            if '/bin/' not in self.atsas_dir:
-                print('We were NOT able to locate the ATSAS-GNOM library on your local computer. Define this manually when calling the BasicSAXS() class.')
-                print('We will terminate the script...')
-                sys.exit('Analysis terminated!!!')
-            else:
-                print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculations may fail'%gnom_dir)
-            print('#'*75)
-        else:
-            print('#'*75)
-            print('GNOM directory provided')
-            print('#'*75)
+        if notify==True:
+          if atsas_dir==' ':
+              print('#'*75)
+              print('No GNOM directory provided, attempting to find it...')
+              get_dammif_dir=subprocess.Popen('cd; which dammif', shell=True, stdout=subprocess.PIPE).stdout
+              dammif_dir=get_dammif_dir.read()
+              dammif_dir_s2=dammif_dir.decode()
+              # print(dammif_dir_s2)
+              dammif_dir_s3=re.sub(r'\w*dammif\w*', '', dammif_dir_s2)
+              gnom_dir=dammif_dir_s3.strip()+'gnom'
+              self.atsas_dir=gnom_dir # setting gnom directory finally
+              # print(self.atsas_dir)
+              if '/bin/' not in self.atsas_dir:
+                  print('We were NOT able to locate the ATSAS-GNOM library on your local computer. Define this manually when calling the BasicSAXS() class.')
+                  print('We will terminate the script...')
+                  sys.exit('Analysis terminated!!!')
+              else:
+                  print('The GNOM library was found in the directory: %s \nIf this is the incorrect library, the calculations may fail'%gnom_dir)
+              print('#'*75)
+          else:
+              print('#'*75)
+              print('GNOM directory provided')
+              print('#'*75)
 
         self.plots=PlotClass(notify=False)
         self.FileParser=FileParser(notify=False)
