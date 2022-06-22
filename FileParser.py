@@ -388,7 +388,9 @@ class FileParser():
 		'''
 		'''
 		print('Reading in .dat files from directory: %s'%str(directorypath))
-		print('Directory contenets: ',os.listdir(directorypath))
+		print('Directory contents: ')
+		for j in os.listdir(directorypath):
+			print(j)
 		nameList = [] # create empty list
 		for j in os.listdir(directorypath):
 			if j.endswith('.dat'): # only grab files with .dat extension

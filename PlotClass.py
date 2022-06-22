@@ -769,7 +769,8 @@ class PlotClass:
     def nPlot_variX_and_Color(self,
         pairList,labelList,colorList,savelabel,
         xlabel='No Label Provided',ylabel='No Label Provided',
-        LogLin=True,LinLin=False,LogLog=False,linewidth=3,
+        LogLin=True,LinLin=False,LogLog=False, kratky=False,
+        linewidth=3,
         set_ylim=False,ylow=0.0001,yhigh=1,darkmode=False,
         lg=True,
         lg_size=14,
@@ -826,11 +827,6 @@ class PlotClass:
                             color=j,
                             linestyle=next(cycol))
                 n+=1
-                # plt.semilogy(i[2],i[3],
-                #             label=labelList[n],
-                #             linewidth=linewidth,
-                #             color=c1)
-                # n+=1
         elif LinLin==True:
             for i,j,z in zip(pairList,colorList,labelList):
                 plt.plot(i[0],i[1],
@@ -838,11 +834,6 @@ class PlotClass:
                             linewidth=linewidth,
                             color=j,
                             linestyle=next(cycol))
-                n+=1
-                # plt.plot(i[2],i[3],
-                #             label=labelList[n],
-                #             color=c1,
-                #             linewidth=linewidth)
                 n+=1
         elif LogLog==True:
             for i in pairList:
@@ -857,7 +848,13 @@ class PlotClass:
                 n+=1
                 ax1.set_yscale('log')
                 ax1.set_xscale('log')
-
+        elif kratky==True:
+          for i in pairList:
+              plt.plot(i[0],i[1]*(i[0]**2),
+                          label=labelList[n],
+                          linewidth=linewidth,
+                          linestyle=next(cycol))
+              n+=1
 
         plt.ylabel(ylabel,size=22)
         plt.xlabel(xlabel,size=22)
