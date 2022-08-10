@@ -814,6 +814,21 @@ class SAXSCalcs:
 
       return diction
 
+    def load_absFiles(self,fileList):
+      '''
+      Describe function here:
+
+
+      '''
+      c=1
+      diction={}
+      for i in fileList:
+        diction['data_%s'%str(c)]=np.loadtxt(i, dtype={'names': ('Q', 'I(Q)'), 'formats': (np.float,np.float)}, comments='#',
+          skiprows=1)
+        c+=1
+
+      return diction
+
 
     def runCrysol(self, datFileList,
                   PDB_File,
@@ -969,104 +984,202 @@ class SAXSCalcs:
           os.mkdir(save_dir) # create it if it doesn't already exist
 
         ## Import data files
-        basename = os.path.basename(filename)
+        if filename == None:
+          basename = 'noSAXS_profile'
+        else:
+          basename = os.path.basename(filename)
         basename_pdb = os.path.basename(PDB_File)
         output_name = cwd + crysol_dir + '/%s'%str(os.path.splitext(str(basename))[0]) + '_%s'%str(os.path.splitext(str(basename_pdb))[0])
 
-        ## Crysol Modeling
+        
 
-        print('--> Running runCrysol_single Function\n')
-        # n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
-        cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(output_name))
-        proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
-        (out, err) = proc.communicate()
-        # print(out)
+        ## Crysol Modeling - Against SAXS Profile
 
-        crysol_List=[]
-        crysol_List.append(output_name + '.log')
+        if filename is not None:
 
-        crysol_fits = []
-        crysol_fits.append(output_name + '.fit')
+          print('--> Running runCrysol_single Function\n')
+          # n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
+          cmd = 'crysol %s %s -lm 50 -sm %s -kp=ii -p %s'%(str(PDB_File),str(filename),str(qmax),str(output_name))
+          proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+          (out, err) = proc.communicate()
+          # print(out)
 
+          crysol_List=[]
+          crysol_List.append(output_name + '.log')
 
-        print('Command passed to terminal:\n')
-        print(cmd)
-        print('')
-        ##### Fancier parsing..
-
-        crysol_files = self.load_fitFiles(fileList=crysol_fits)
-
-        export_dictionary={}
-            
-        for fn,k in zip(crysol_List,crysol_files):
-            crysol_parse=[]
-            crysol_parse2=[]
-            with open(fn, "r") as f: # important to use with command when dealing with files
-                counter = 0
-                print('Input Data File: %s' %str(os.path.basename(filename)))
-                print('Input PDB File: %s' %str(os.path.basename(PDB_File)))
-                c=0
-                for line in f:
-                    c+=1
-                    if 'Chi^2' in line:
-                        crysol_parse.append(''.join(islice(f, 1)))
-                    if 'Rg from the slope of net intensity' in line:
-                        # print(line)
-                        crysol_parse2.append(line)
-            
-            Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
-            print('Final Rg (A): ', Rg)
-            chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
-            print('Chi-Squared: ',chi_sq)
-            print('')
+          crysol_fits = []
+          crysol_fits.append(output_name + '.fit')
 
 
-            Q = crysol_files[str(k)]['Q']
-            expt_IQ = crysol_files[str(k)]['I(Q)']
-            model_IQ = crysol_files[str(k)]['I(Q)_mod']
+          print('Command passed to terminal:\n')
+          print(cmd)
+          print('')
+          ##### Fancier parsing..
+
+          crysol_files = self.load_fitFiles(fileList=crysol_fits)
+
+          export_dictionary={}
+              
+          for fn,k in zip(crysol_List,crysol_files):
+              crysol_parse=[]
+              crysol_parse2=[]
+              with open(fn, "r") as f: # important to use with command when dealing with files
+                  counter = 0
+                  print('Input Data File: %s' %str(os.path.basename(filename)))
+                  print('Input PDB File: %s' %str(os.path.basename(PDB_File)))
+                  c=0
+                  for line in f:
+                      c+=1
+                      if 'Chi^2' in line:
+                          crysol_parse.append(''.join(islice(f, 1)))
+                      if 'Rg from the slope of net intensity' in line:
+                          # print(line)
+                          crysol_parse2.append(line)
+              
+              Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
+              print('Final Rg (A): ', Rg)
+              chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
+              print('Chi-Squared: ',chi_sq)
+              print('')
 
 
-            if kratky == True:
-              pairList = [
-              [Q, expt_IQ*(Q**2)],
-              [Q, model_IQ*(Q**2)]]
-              labelList = [str(L1), str(L2)]
-              colorList = [str(c1), str(c2)]
-              savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+              Q = crysol_files[str(k)]['Q']
+              expt_IQ = crysol_files[str(k)]['I(Q)']
+              model_IQ = crysol_files[str(k)]['I(Q)_mod']
 
-              self.nPlot_variX_and_Color(pairList,
-                                         labelList,
-                                         colorList,
-                                         savelabel,
-                                         xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
-                                         ylabel='$\\rm I(q) \\cdot q^{2}$ ',
-                                         LogLin=False,LinLin=True,
-                                         LogLog=False,linewidth=3,
-                                         set_ylim=False,ylow=0.0001,
-                                         yhigh=1,darkmode=False,
-                                         lg_size=14)
-            else:
-              # Log-Lin
-              pairList = [
-              [Q, expt_IQ],
-              [Q, model_IQ]]
-              labelList = [str(L1), str(L2)]
-              colorList = [str(c1), str(c2)]
-              savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
 
-              self.nPlot_variX_and_Color(pairList,
-                                         labelList,
-                                         colorList,
-                                         savelabel,
-                                         xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
-                                         ylabel='$\\rm I(q)$ ',
-                                         LogLin=True,LinLin=False,
-                                         LogLog=False,linewidth=3,
-                                         set_ylim=False,ylow=0.0001,
-                                         yhigh=1,darkmode=False,
-                                         lg_size=14)
+              if kratky == True:
+                pairList = [
+                [Q, expt_IQ*(Q**2)],
+                [Q, model_IQ*(Q**2)]]
+                labelList = [str(L1), str(L2)]
+                colorList = [str(c1), str(c2)]
+                savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
 
-            export_dictionary['%s'%str(filename)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
+                self.nPlot_variX_and_Color(pairList,
+                                           labelList,
+                                           colorList,
+                                           savelabel,
+                                           xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                           ylabel='$\\rm I(q) \\cdot q^{2}$ ',
+                                           LogLin=False,LinLin=True,
+                                           LogLog=False,linewidth=3,
+                                           set_ylim=False,ylow=0.0001,
+                                           yhigh=1,darkmode=False,
+                                           lg_size=14)
+              else:
+                # Log-Lin
+                pairList = [
+                [Q, expt_IQ],
+                [Q, model_IQ]]
+                labelList = [str(L1), str(L2)]
+                colorList = [str(c1), str(c2)]
+                savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+
+                self.nPlot_variX_and_Color(pairList,
+                                           labelList,
+                                           colorList,
+                                           savelabel,
+                                           xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                           ylabel='$\\rm I(q)$ ',
+                                           LogLin=True,LinLin=False,
+                                           LogLog=False,linewidth=3,
+                                           set_ylim=False,ylow=0.0001,
+                                           yhigh=1,darkmode=False,
+                                           lg_size=14)
+
+              export_dictionary['%s'%str(filename)] = {'Q': Q,'exptIQ': expt_IQ, 'modelIQ': model_IQ}
+
+        else:
+          print('--> Running runCrysol_single function with no SAXS profile input\n')
+          # n=len(datFile['ERROR']) # scale the size of the profile for downstream residuals calculations
+          cmd = 'crysol %s -lm 50 -sm %s -ns 1000 -kp=ii -p %s'%(str(PDB_File),str(qmax),str(output_name))
+          proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+          (out, err) = proc.communicate()
+          # print(out)
+
+
+          crysol_List=[]
+          crysol_List.append(output_name + '.log')
+
+          crysol_fits = []
+          crysol_fits.append(output_name + '.abs')
+
+
+          print('Command passed to terminal:\n')
+          print(cmd)
+          print('')
+          ##### Fancier parsing..
+
+          crysol_files = self.load_absFiles(fileList=crysol_fits)
+
+          export_dictionary={}
+
+          for fn,k in zip(crysol_List,crysol_files):
+              crysol_parse=[]
+              crysol_parse2=[]
+              with open(fn, "r") as f: # important to use with command when dealing with files
+                  counter = 0
+                  print('Input PDB File: %s' %str(os.path.basename(PDB_File)))
+                  c=0
+                  for line in f:
+                      c+=1
+                      # if 'Chi^2' in line:
+                      #     crysol_parse.append(''.join(islice(f, 1)))
+                      if 'Rg from the slope of net intensity' in line:
+                          # print(line)
+                          crysol_parse2.append(line)
+              
+              Rg=[i for j in crysol_parse2[0].split() for i in (j, ' ')][:-1][18]
+              print('Final Rg (A): ', Rg)
+              # chi_sq=[i for j in crysol_parse[0].split() for i in (j, ' ')][:-1][18]
+              # print('Chi-Squared: ',chi_sq)
+              print('')
+
+              Q = crysol_files[str(k)]['Q']
+              expt_IQ = crysol_files[str(k)]['I(Q)']
+
+              if kratky == True:
+                pairList = [
+                [Q, expt_IQ*(Q**2)
+                ]]
+                labelList = [str(L1)]
+                colorList = [str(c1)]
+                savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+
+                self.nPlot_variX_and_Color(pairList,
+                                           labelList,
+                                           colorList,
+                                           savelabel,
+                                           xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                           ylabel='$\\rm I(q) \\cdot q^{2}$ ',
+                                           LogLin=False,LinLin=True,
+                                           LogLog=False,linewidth=3,
+                                           set_ylim=False,ylow=0.0001,
+                                           yhigh=1,darkmode=False,
+                                           lg_size=14)
+              else:
+                # Log-Lin
+                pairList = [
+                [Q, expt_IQ]]
+                labelList = [str(L1)]
+                colorList = [str(c1)]
+                savelabel = cwd + crysol_dir + '/' + str(os.path.splitext(str(basename))[0]) + '_Crysol_Kratky'
+
+                self.nPlot_variX_and_Color(pairList,
+                                           labelList,
+                                           colorList,
+                                           savelabel,
+                                           xlabel='$\\rm q=\\frac{4 \\pi sin(\\theta)}{\\lambda} (\\AA^{-1})$',
+                                           ylabel='$\\rm I(q)$ ',
+                                           LogLin=True,LinLin=False,
+                                           LogLog=False,linewidth=3,
+                                           set_ylim=False,ylow=0.0001,
+                                           yhigh=1,darkmode=False,
+                                           lg_size=14)
+
+              export_dictionary['%s'%str(basename)] = {'Q': Q,'exptIQ': expt_IQ}
+
 
         return export_dictionary
 
